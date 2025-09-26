@@ -149,6 +149,32 @@ button:hover {
     padding: 20px;
 }
 
+/* Стили для подсветки совпадений */
+.highlight {
+    background-color: #ffeb3b;
+    color: #333;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: bold;
+    box-shadow: 0 1px 3px rgba(255, 235, 59, 0.3);
+}
+
+.highlight-name {
+    background-color: #4CAF50;
+    color: white;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+
+.highlight-description {
+    background-color: #ffeb3b;
+    color: #333;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+
 /* Адаптивность для больших экранов */
 @media (min-width: 768px) {
     .container {
