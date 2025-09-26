@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Поиск вещей PF2E по описанию</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Поиск вещей PF2E по описанию</h1>
+        
+        <div class="input-group">
+            <label for="userInput">Введите текст для поиска:</label>
+            <input type="text" id="userInput" placeholder="Введите описание предмета...">
+        </div>
+        
+        <button onclick="processInput()">Найти предметы</button>
+        
+        <div id="result">
+            <p>Результат поиска появится здесь...</p>
+        </div>
+    </div>
+
+    <script src="./script.mjs"></script>
+</body>
+</html>
