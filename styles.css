@@ -103,6 +103,39 @@ button:hover {
     margin-bottom: 10px;
 }
 
+.item-id a {
+    color: #2c3e50;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+/* Hover эффект для всего блока item-id */
+.item-id:hover {
+    background: #3498db !important;
+    color: white !important;
+    transform: scale(1.05);
+    transition: all 0.3s ease;
+}
+
+.item-id:hover a {
+    color: white !important;
+}
+
+/* Стили для подсветки внутри ссылок */
+.item-id a .highlight {
+    background-color: #ffeb3b !important;
+    color: #333 !important;
+    padding: 1px 3px;
+    border-radius: 2px;
+    font-weight: bold;
+}
+
+.item-id:hover a .highlight {
+    background-color: #fff !important;
+    color: #333 !important;
+}
+
 .item-description {
     color: #34495e;
     line-height: 1.6;
