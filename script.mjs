@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function findItems(value) {
     if (!value) return [];
     const lowerValue = value.toLowerCase();
-    return Object.entries(items).filter(([key, item]) => {
+    const filtered = Object.entries(items).filter(([key, item]) => {
         const name = item.name || '';
         const description = item.description || '';
         const keyStr = key || '';
@@ -92,6 +92,15 @@ function findItems(value) {
         name: item.name,
         description: item.description
     }));
+
+    filtered.sort((a, b) => {
+        const aIsEffect = a.key.startsWith("Effect");
+        const bIsEffect = b.key.startsWith("Effect");
+        if (aIsEffect === bIsEffect) return 0;
+        return aIsEffect ? 1 : -1;
+    });
+
+    return filtered;
 }
 
 
