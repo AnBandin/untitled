@@ -3,24 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Поиск вещей PF2E по описанию</title>
+    <meta name="description" content="Поиск предметов Pathfinder 2E по имени и описанию">
+    <title>PF2E Item Search - Поиск предметов Pathfinder 2E</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <h1>Поиск вещей PF2E по имени/описанию</h1>
+    <main class="container">
+        <header>
+            <h1>PF2E Item Search</h1>
+            <p class="subtitle">Поиск предметов Pathfinder 2E по имени и описанию</p>
+        </header>
         
-        <div class="input-group">
-            <label for="userInput">Введите текст для поиска:</label>
-            <input type="text" id="userInput" placeholder="Введите описание предмета...">
-        </div>
+        <section class="search-section">
+            <form class="search-form" role="search">
+                <div class="input-group">
+                    <label for="userInput">Поисковый запрос</label>
+                    <input 
+                        type="text" 
+                        id="userInput" 
+                        placeholder="Введите название или описание предмета..."
+                        autocomplete="off"
+                        aria-describedby="search-help"
+                    >
+                    <small id="search-help" class="input-help">
+                        Поиск работает по названию, описанию и ID предмета
+                    </small>
+                </div>
+                
+                <button type="button" id="searchButton" aria-label="Выполнить поиск">
+                    <span>🔍</span>
+                    Найти предметы
+                </button>
+            </form>
+        </section>
         
-        <button id="searchButton">Найти предметы</button>
-        
-        <div id="result">
-            <p>Результат поиска появится здесь...</p>
-        </div>
-    </div>
+        <section id="result" aria-live="polite" aria-label="Результаты поиска">
+            <div class="welcome-message">
+                <h2>Добро пожаловать!</h2>
+                <p>Введите поисковый запрос выше, чтобы найти предметы из Pathfinder 2E.</p>
+                <div class="search-tips">
+                    <h3>Советы по поиску:</h3>
+                    <ul>
+                        <li>Ищите по названию предмета</li>
+                        <li>Используйте ключевые слова из описания</li>
+                        <li>Попробуйте искать по типу предмета (оружие, броня, зелье)</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
 
     <script type="module" src="./script.js"></script>
 </body>
