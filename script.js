@@ -129,6 +129,12 @@ class ItemSearch {
         }
         
         const normalizedQuery = this.normalizeQuery(query);
+        
+        // Проверяем, является ли запрос осмысленным
+        if (!this.isMeaningfulQuery(normalizedQuery)) {
+            return [];
+        }
+        
         return this.performSearch(normalizedQuery);
     }
 
@@ -148,6 +154,59 @@ class ItemSearch {
      */
     normalizeQuery(query) {
         return query.trim().toLowerCase();
+    }
+
+    /**
+     * Проверяет, является ли запрос осмысленным
+     * @param {string} query - Нормализованный запрос
+     * @returns {boolean} true если запрос осмысленный
+     */
+    isMeaningfulQuery(query) {
+        // Проверяем длину запроса
+        if (query.length < 2) {
+            return false;
+        }
+        
+        // Проверяем, не является ли запрос случайным набором символов
+        if (this.isRandomString(query)) {
+            return false;
+        }
+        
+        // Проверяем, содержит ли запрос хотя бы одну букву
+        if (!/[а-яёa-z]/.test(query)) {
+            return false;
+        }
+        
+        return true;
+    }
+
+    /**
+     * Проверяет, является ли строка случайным набором символов
+     * @param {string} str - Строка для проверки
+     * @returns {boolean} true если строка выглядит как случайная
+     */
+    isRandomString(str) {
+        // Проверяем повторяющиеся символы (более 3 одинаковых подряд)
+        if (/(.)\1{3,}/.test(str)) {
+            return true;
+        }
+        
+        // Проверяем чередование символов (ававава, ывывыв)
+        if (/(.)(.)\1\2\1/.test(str)) {
+            return true;
+        }
+        
+        // Проверяем слишком много согласных подряд (более 4)
+        if (/[бвгджзклмнпрстфхцчшщ]{5,}/.test(str)) {
+            return true;
+        }
+        
+        // Проверяем слишком много гласных подряд (более 3)
+        if (/[аеёиоуыэюя]{4,}/.test(str)) {
+            return true;
+        }
+        
+        return false;
     }
 
     /**
@@ -302,14 +361,26 @@ class ItemSearch {
         const textLower = text.toLowerCase();
         const queryWords = query.split(/\s+/).filter(word => word.length >= 2);
         
+        // Если нет слов для поиска, возвращаем false
+        if (queryWords.length === 0) {
+            return false;
+        }
+        
         return queryWords.every(word => {
+            // Точное совпадение
             if (textLower.includes(word)) return true;
             
-            // Частичное совпадение для длинных слов
+            // Частичное совпадение только для слов длиннее 4 символов
             if (word.length > 4) {
-                return textLower.split(/\s+/).some(textWord => 
-                    textWord.startsWith(word) || word.startsWith(textWord)
-                );
+                return textLower.split(/\s+/).some(textWord => {
+                    // Проверяем, что совпадение достаточно значимое
+                    const minLength = Math.min(word.length, textWord.length);
+                    const maxLength = Math.max(word.length, textWord.length);
+                    const similarity = minLength / maxLength;
+                    
+                    return (textWord.startsWith(word) || word.startsWith(textWord)) && 
+                           similarity >= 0.6; // Минимум 60% совпадения
+                });
             }
             return false;
         });
