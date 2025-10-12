@@ -115,9 +115,17 @@ class TextUtils {
             return text || '';
         }
         
-        const escapedQuery = this.escapeRegExp(query);
-        const regex = new RegExp(`(${escapedQuery})`, 'gi');
-        return text.replace(regex, `<span class="${className}">$1</span>`);
+        // Разбиваем запрос на слова для подсветки каждого слова
+        const queryWords = query.split(/\s+/).filter(word => word.length > 0);
+        let highlightedText = text;
+        
+        queryWords.forEach(word => {
+            const escapedWord = this.escapeRegExp(word);
+            const regex = new RegExp(`(${escapedWord})`, 'gi');
+            highlightedText = highlightedText.replace(regex, `<span class="${className}">$1</span>`);
+        });
+        
+        return highlightedText;
     }
 
     /**
@@ -188,8 +196,7 @@ class ItemSearch {
         this.searchStrategies = [
             this.searchByName.bind(this),
             this.searchByDescription.bind(this),
-            this.searchByKey.bind(this),
-            this.searchByType.bind(this)
+            this.searchByKey.bind(this)
         ];
     }
 
@@ -238,7 +245,69 @@ class ItemSearch {
             );
         });
 
-        return this.mapToSearchResults(matchingItems);
+        // Ранжируем результаты по релевантности
+        const rankedItems = this.rankResults(matchingItems, normalizedQuery);
+        
+        // Ограничиваем количество результатов
+        const maxResults = 50;
+        const limitedItems = rankedItems.slice(0, maxResults);
+        
+        return this.mapToSearchResults(limitedItems);
+    }
+
+    /**
+     * Ранжирует результаты поиска по релевантности
+     * @param {Array} items - Найденные предметы
+     * @param {string} query - Поисковый запрос
+     * @returns {Array} Отранжированные результаты
+     */
+    rankResults(items, query) {
+        return items.sort(([keyA, itemA], [keyB, itemB]) => {
+            const scoreA = this.calculateRelevanceScore(itemA, keyA, query);
+            const scoreB = this.calculateRelevanceScore(itemB, keyB, query);
+            return scoreB - scoreA; // Сортируем по убыванию релевантности
+        });
+    }
+
+    /**
+     * Вычисляет релевантность предмета для запроса
+     * @param {Object} item - Данные предмета
+     * @param {string} key - Ключ предмета
+     * @param {string} query - Поисковый запрос
+     * @returns {number} Оценка релевантности
+     */
+    calculateRelevanceScore(item, key, query) {
+        let score = 0;
+        const queryLower = query.toLowerCase();
+        const nameLower = (item.name || '').toLowerCase();
+        const keyLower = key.toLowerCase();
+        
+        // Точное совпадение в названии - высший приоритет
+        if (nameLower === queryLower) {
+            score += 100;
+        }
+        
+        // Название начинается с запроса
+        if (nameLower.startsWith(queryLower)) {
+            score += 50;
+        }
+        
+        // Название содержит запрос
+        if (nameLower.includes(queryLower)) {
+            score += 30;
+        }
+        
+        // Ключ содержит запрос
+        if (keyLower.includes(queryLower)) {
+            score += 20;
+        }
+        
+        // Описание содержит запрос
+        if ((item.description || '').toLowerCase().includes(queryLower)) {
+            score += 10;
+        }
+        
+        return score;
     }
 
     /**
@@ -276,40 +345,6 @@ class ItemSearch {
         return this.fuzzySearch(key, query);
     }
 
-    /**
-     * Поиск по типу предмета (амуниция, оружие, броня и т.д.)
-     * @param {Object} item - Данные предмета
-     * @param {string} key - Ключ предмета
-     * @param {string} query - Поисковый запрос
-     * @returns {boolean} true если найдено совпадение
-     */
-    searchByType(item, key, query) {
-        // Ищем в ключе предмета общие типы
-        const keyLower = key.toLowerCase();
-        const queryLower = query.toLowerCase();
-        
-        // Словарь типов предметов
-        const itemTypes = {
-            'амуниция': ['ammunition', 'bullet', 'arrow', 'bolt', 'dart'],
-            'оружие': ['weapon', 'sword', 'bow', 'crossbow', 'staff', 'wand'],
-            'броня': ['armor', 'shield', 'helmet', 'mail', 'plate'],
-            'здание': ['potion', 'elixir', 'oil', 'poison'],
-            'магический': ['magic', 'spell', 'scroll', 'wand', 'staff'],
-            'снаряжение': ['equipment', 'tool', 'gear', 'kit']
-        };
-        
-        // Проверяем, есть ли в запросе ключевые слова типов
-        for (const [type, keywords] of Object.entries(itemTypes)) {
-            if (queryLower.includes(type) || keywords.some(keyword => queryLower.includes(keyword))) {
-                // Если тип найден, проверяем, подходит ли предмет
-                if (keywords.some(keyword => keyLower.includes(keyword))) {
-                    return true;
-                }
-            }
-        }
-        
-        return false;
-    }
 
     /**
      * Нечеткий поиск - ищет по отдельным словам
@@ -326,15 +361,23 @@ class ItemSearch {
             return false;
         }
         
+        // Минимальная длина слова для поиска
+        const minWordLength = 2;
+        
         // Проверяем, что все слова из запроса найдены в тексте
         return queryWords.every(word => {
+            // Пропускаем слишком короткие слова
+            if (word.length < minWordLength) {
+                return false;
+            }
+            
             // Точное совпадение
             if (textLower.includes(word)) {
                 return true;
             }
             
-            // Частичное совпадение для слов длиннее 3 символов
-            if (word.length > 3) {
+            // Частичное совпадение только для слов длиннее 4 символов
+            if (word.length > 4) {
                 return textLower.split(/\s+/).some(textWord => 
                     textWord.startsWith(word) || word.startsWith(textWord)
                 );
@@ -601,6 +644,7 @@ class SearchUI {
         const aonUrl = `https://2e.aonprd.com/Search.aspx?q=${encodeURIComponent(item.key)}`;
         const highlightedKey = TextUtils.highlightMatches(item.key, query, CSS_CLASSES.HIGHLIGHT);
         const clickableId = `<a href="${aonUrl}" target="_blank" title="Открыть в Archives of Nethys">${highlightedKey}</a>`;
+        
         
         return `
             <div class="item-block">
