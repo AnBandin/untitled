@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         results.forEach(item => {
             // Очищаем HTML теги из описания для лучшей читаемости
-            const cleanDescription = item.description
+            const cleanDescription = (item?.description ?? '')
                 .replace(/<[^>]*>/g, '') // Убираем HTML теги
                 .replace(/@UUID\[[^\]]*\]/g, '') // Убираем UUID ссылки
                 .replace(/@Trait\[[^\]]*\]/g, '') // Убираем trait ссылки
