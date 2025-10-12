@@ -188,7 +188,8 @@ class ItemSearch {
         this.searchStrategies = [
             this.searchByName.bind(this),
             this.searchByDescription.bind(this),
-            this.searchByKey.bind(this)
+            this.searchByKey.bind(this),
+            this.searchByType.bind(this)
         ];
     }
 
@@ -249,7 +250,7 @@ class ItemSearch {
      */
     searchByName(item, key, query) {
         const name = item.name || '';
-        return name.toLowerCase().includes(query);
+        return this.fuzzySearch(name, query);
     }
 
     /**
@@ -261,7 +262,7 @@ class ItemSearch {
      */
     searchByDescription(item, key, query) {
         const description = item.description || '';
-        return description.toLowerCase().includes(query);
+        return this.fuzzySearch(description, query);
     }
 
     /**
@@ -272,7 +273,75 @@ class ItemSearch {
      * @returns {boolean} true если найдено совпадение
      */
     searchByKey(item, key, query) {
-        return key.toLowerCase().includes(query);
+        return this.fuzzySearch(key, query);
+    }
+
+    /**
+     * Поиск по типу предмета (амуниция, оружие, броня и т.д.)
+     * @param {Object} item - Данные предмета
+     * @param {string} key - Ключ предмета
+     * @param {string} query - Поисковый запрос
+     * @returns {boolean} true если найдено совпадение
+     */
+    searchByType(item, key, query) {
+        // Ищем в ключе предмета общие типы
+        const keyLower = key.toLowerCase();
+        const queryLower = query.toLowerCase();
+        
+        // Словарь типов предметов
+        const itemTypes = {
+            'амуниция': ['ammunition', 'bullet', 'arrow', 'bolt', 'dart'],
+            'оружие': ['weapon', 'sword', 'bow', 'crossbow', 'staff', 'wand'],
+            'броня': ['armor', 'shield', 'helmet', 'mail', 'plate'],
+            'здание': ['potion', 'elixir', 'oil', 'poison'],
+            'магический': ['magic', 'spell', 'scroll', 'wand', 'staff'],
+            'снаряжение': ['equipment', 'tool', 'gear', 'kit']
+        };
+        
+        // Проверяем, есть ли в запросе ключевые слова типов
+        for (const [type, keywords] of Object.entries(itemTypes)) {
+            if (queryLower.includes(type) || keywords.some(keyword => queryLower.includes(keyword))) {
+                // Если тип найден, проверяем, подходит ли предмет
+                if (keywords.some(keyword => keyLower.includes(keyword))) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Нечеткий поиск - ищет по отдельным словам
+     * @param {string} text - Текст для поиска
+     * @param {string} query - Поисковый запрос
+     * @returns {boolean} true если найдено совпадение
+     */
+    fuzzySearch(text, query) {
+        const textLower = text.toLowerCase();
+        const queryWords = query.split(/\s+/).filter(word => word.length > 0);
+        
+        // Если запрос пустой, возвращаем false
+        if (queryWords.length === 0) {
+            return false;
+        }
+        
+        // Проверяем, что все слова из запроса найдены в тексте
+        return queryWords.every(word => {
+            // Точное совпадение
+            if (textLower.includes(word)) {
+                return true;
+            }
+            
+            // Частичное совпадение для слов длиннее 3 символов
+            if (word.length > 3) {
+                return textLower.split(/\s+/).some(textWord => 
+                    textWord.startsWith(word) || word.startsWith(textWord)
+                );
+            }
+            
+            return false;
+        });
     }
 
     /**

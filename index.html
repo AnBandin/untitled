@@ -21,22 +21,23 @@
             <form class="search-form" role="search">
                 <div class="input-group">
                     <label for="userInput">Поисковый запрос</label>
-                    <input 
-                        type="text" 
-                        id="userInput" 
-                        placeholder="Введите название или описание предмета..."
-                        autocomplete="off"
-                        aria-describedby="search-help"
-                    >
+                    <div class="input-with-button">
+                        <input 
+                            type="text" 
+                            id="userInput" 
+                            placeholder="Введите название или описание предмета..."
+                            autocomplete="off"
+                            aria-describedby="search-help"
+                        >
+                        <button type="button" id="searchButton" aria-label="Выполнить поиск">
+                            <span>🔍</span>
+                            Найти
+                        </button>
+                    </div>
                     <small id="search-help" class="input-help">
                         Поиск работает по названию, описанию и ID предмета
                     </small>
                 </div>
-                
-                <button type="button" id="searchButton" aria-label="Выполнить поиск">
-                    <span>🔍</span>
-                    Найти предметы
-                </button>
             </form>
         </section>
         
