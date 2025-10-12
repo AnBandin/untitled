@@ -1,10 +1,6 @@
 // Импортируем данные предметов из отдельного файла
 import items from './items.js';
 
-// Отладочная информация
-console.log('Items загружены:', items);
-console.log('Количество предметов:', Object.keys(items).length);
-console.log('Первый предмет:', Object.keys(items)[0]);
 
 /**
  * Константы приложения
@@ -202,20 +198,12 @@ class ItemSearch {
      * @returns {Array} Массив найденных предметов
      */
     search(query) {
-        console.log('ItemSearch.search вызван с запросом:', query);
-        
         if (!this.isValidQuery(query)) {
-            console.log('Невалидный запрос');
             return [];
         }
         
         const normalizedQuery = this.normalizeQuery(query);
-        console.log('Нормализованный запрос:', normalizedQuery);
-        console.log('Всего предметов для поиска:', Object.keys(this.items).length);
-        
-        const results = this.performSearch(normalizedQuery);
-        console.log('Результаты поиска:', results);
-        return results;
+        return this.performSearch(normalizedQuery);
     }
 
     /**
@@ -404,19 +392,10 @@ class NotificationManager {
  */
 class SearchUI {
     constructor(searchEngine) {
-        console.log('SearchUI конструктор вызван');
         this.searchEngine = searchEngine;
-        
-        console.log('Ищем DOM элементы...');
         this.input = document.querySelector(DOM_SELECTORS.INPUT);
         this.button = document.querySelector(DOM_SELECTORS.BUTTON);
         this.resultDiv = document.querySelector(DOM_SELECTORS.RESULT);
-        
-        console.log('Найденные элементы:', {
-            input: this.input,
-            button: this.button,
-            result: this.resultDiv
-        });
         
         this.validateElements();
         this.init();
@@ -434,9 +413,6 @@ class SearchUI {
 
         requiredElements.forEach(({ element, name }) => {
             if (!element) {
-                console.error(`Не найден обязательный элемент: ${name}`);
-                console.error(`Селектор: ${DOM_SELECTORS[name.toUpperCase()]}`);
-                console.error('Доступные элементы:', document.querySelectorAll('*[id]'));
                 throw new Error(`Не найден обязательный элемент: ${name}`);
             }
         });
@@ -446,34 +422,25 @@ class SearchUI {
      * Инициализация UI
      */
     init() {
-        console.log('SearchUI init вызван');
         this.bindEvents();
         this.loadFromURL();
-        console.log('SearchUI инициализирован');
     }
 
     /**
      * Привязка обработчиков событий
      */
     bindEvents() {
-        console.log('Привязываем обработчики событий...');
-        
         // Обработка Enter в инпуте
         this.input.addEventListener('keydown', (e) => {
-            console.log('Клавиша нажата:', e.key);
             if (e.key === 'Enter') {
-                console.log('Enter нажат, выполняем поиск');
                 this.performSearch();
             }
         });
 
         // Обработка клика по кнопке
         this.button.addEventListener('click', () => {
-            console.log('Кнопка нажата, выполняем поиск');
             this.performSearch();
         });
-        
-        console.log('Обработчики событий привязаны');
     }
 
     /**
@@ -491,22 +458,17 @@ class SearchUI {
      * Выполняет поиск и отображает результаты
      */
     performSearch() {
-        console.log('Выполняем поиск...');
         const query = this.input.value.trim();
-        console.log('Поисковый запрос:', query);
         
         // Обновляем URL с параметром поиска
         URLUtils.setSearchParams(query);
         
         if (!query) {
-            console.log('Пустой запрос, показываем пустое состояние');
             this.showEmptyState();
             return;
         }
         
-        console.log('Ищем предметы...');
         const results = this.searchEngine.search(query);
-        console.log('Найдено результатов:', results.length);
         this.displayResults(results, query);
     }
 
@@ -542,13 +504,10 @@ class SearchUI {
         }
         
         let html = `
-            <div class="search-results-header">
-                <div class="results-info">
-                    <span>Найдено предметов: ${results.length}</span>
-                    <button class="share-button" onclick="window.shareResults('${query}')" title="Поделиться результатами поиска">
-                        📤 Поделиться
-                    </button>
-                </div>
+            <div class="share-section">
+                <button class="share-button" onclick="window.shareResults('${query}')" title="Скопировать ссылку с результатами поиска">
+                    📤 Скопировать ссылку
+                </button>
             </div>
         `;
         
@@ -602,33 +561,12 @@ class SearchUI {
     }
 
     /**
-     * Поделиться результатами поиска
+     * Копирует ссылку с результатами поиска в буфер обмена
      * @param {string} query - Поисковый запрос
      */
     shareResults(query) {
         const url = window.location.href;
         
-        if (navigator.share) {
-            // Используем Web Share API если доступен
-            navigator.share({
-                title: `PF2E Item Search - Результаты поиска "${query}"`,
-                text: `Найдены предметы Pathfinder 2E по запросу "${query}"`,
-                url: url
-            }).catch(err => {
-                console.log('Ошибка при использовании Web Share API:', err);
-                this.fallbackShare(url);
-            });
-        } else {
-            // Fallback для браузеров без поддержки Web Share API
-            this.fallbackShare(url);
-        }
-    }
-
-    /**
-     * Альтернативный способ поделиться (копирование в буфер обмена)
-     * @param {string} url - URL для копирования
-     */
-    fallbackShare(url) {
         navigator.clipboard.writeText(url).then(() => {
             NotificationManager.show('Ссылка скопирована в буфер обмена!', 'success');
         }).catch(err => {
@@ -665,21 +603,15 @@ class PF2ESearchApp {
      */
     init() {
         if (this.isInitialized) {
-            console.warn('Приложение уже инициализировано');
             return;
         }
-
-        console.log('Инициализация PF2E Search App...');
-        console.log('DOM готовность:', document.readyState);
         
         const initializeApp = () => {
             try {
-                console.log('DOM загружен, инициализируем компоненты...');
                 this.initializeComponents();
                 this.setupGlobalHandlers();
                 this.setupEventListeners();
                 this.isInitialized = true;
-                console.log('Приложение успешно инициализировано');
             } catch (error) {
                 console.error('Ошибка при инициализации:', error);
             }
@@ -697,9 +629,7 @@ class PF2ESearchApp {
      * Инициализирует компоненты приложения
      */
     initializeComponents() {
-        console.log('Создаем SearchUI...');
         this.ui = new SearchUI(this.searchEngine);
-        console.log('SearchUI создан:', this.ui);
     }
 
     /**
