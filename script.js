@@ -183,6 +183,40 @@ class ItemSearch {
     }
 
     /**
+     * Подсчитывает количество вхождений запроса в тексте
+     * @param {string} text - Текст для поиска
+     * @param {string} query - Поисковый запрос
+     * @returns {number} Количество вхождений
+     */
+    countMatches(text, query) {
+        if (!text || !query) return 0;
+        
+        // Подсчитываем точные вхождения
+        const exactMatches = (text.match(new RegExp(this.escapeRegExp(query), 'gi')) || []).length;
+        
+        // Подсчитываем вхождения по словам (для многословных запросов)
+        const queryWords = query.split(/\s+/).filter(word => word.length > 0);
+        let wordMatches = 0;
+        
+        queryWords.forEach(word => {
+            const matches = (text.match(new RegExp(this.escapeRegExp(word), 'gi')) || []).length;
+            wordMatches += matches;
+        });
+        
+        // Возвращаем максимум из точных совпадений и совпадений по словам
+        return Math.max(exactMatches, wordMatches);
+    }
+
+    /**
+     * Экранирует специальные символы для регулярных выражений
+     * @param {string} string - Строка для экранирования
+     * @returns {string} Экранированная строка
+     */
+    escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    /**
      * Вычисляет релевантность предмета для запроса
      * @param {Object} item - Данные предмета
      * @param {string} key - Ключ предмета
@@ -194,6 +228,7 @@ class ItemSearch {
         const queryLower = query.toLowerCase();
         const nameLower = (item.name || '').toLowerCase();
         const keyLower = key.toLowerCase();
+        const descLower = (item.description || '').toLowerCase();
         
         // Точное совпадение в названии - высший приоритет
         if (nameLower === queryLower) {
@@ -205,19 +240,22 @@ class ItemSearch {
             score += 50;
         }
         
-        // Название содержит запрос
-        if (nameLower.includes(queryLower)) {
-            score += 30;
+        // Подсчет вхождений в названии
+        const nameMatches = this.countMatches(nameLower, queryLower);
+        if (nameMatches > 0) {
+            score += 30 + (nameMatches * 5); // Базовые 30 + 5 за каждое вхождение
         }
         
-        // Ключ содержит запрос
-        if (keyLower.includes(queryLower)) {
-            score += 20;
+        // Подсчет вхождений в ключе
+        const keyMatches = this.countMatches(keyLower, queryLower);
+        if (keyMatches > 0) {
+            score += 20 + (keyMatches * 3); // Базовые 20 + 3 за каждое вхождение
         }
         
-        // Описание содержит запрос
-        if ((item.description || '').toLowerCase().includes(queryLower)) {
-            score += 10;
+        // Подсчет вхождений в описании
+        const descMatches = this.countMatches(descLower, queryLower);
+        if (descMatches > 0) {
+            score += 10 + (descMatches * 2); // Базовые 10 + 2 за каждое вхождение
         }
         
         return score;
