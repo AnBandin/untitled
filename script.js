@@ -351,10 +351,11 @@ class SearchUI {
      * Привязка обработчиков событий
      */
     bindEvents() {
-        // Обработка Enter в инпуте - имитируем клик по кнопке
+        // Обработка Enter в инпуте
         this.input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                this.button.click();
+                e.preventDefault();
+                this.performSearch();
             }
         });
 
