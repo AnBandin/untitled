@@ -206,12 +206,20 @@ class ItemSearch {
      * @returns {Array} Массив найденных предметов
      */
     search(query) {
+        console.log('ItemSearch.search вызван с запросом:', query);
+        
         if (!this.isValidQuery(query)) {
+            console.log('Невалидный запрос');
             return [];
         }
         
         const normalizedQuery = this.normalizeQuery(query);
-        return this.performSearch(normalizedQuery);
+        console.log('Нормализованный запрос:', normalizedQuery);
+        
+        const results = this.performSearch(normalizedQuery);
+        console.log('Результаты поиска:', results.length, 'предметов');
+        
+        return results;
     }
 
     /**
@@ -610,11 +618,18 @@ class SearchUI {
      * @param {string} query - Поисковый запрос
      */
     displayResults(results, query) {
+        console.log('displayResults вызван:', {
+            resultsCount: results.length,
+            query: query
+        });
+        
         if (results.length === 0) {
+            console.log('Нет результатов, показываем сообщение об отсутствии результатов');
             this.showNoResults(query);
             return;
         }
         
+        console.log('Есть результаты, отображаем их');
         let html = `
             <div class="share-section">
                 <button class="share-button" onclick="window.shareResults('${query}')" title="Скопировать ссылку с результатами поиска">
