@@ -232,24 +232,34 @@ class ItemSearch {
         
         // Точное совпадение в названии - высший приоритет
         if (nameLower === queryLower) {
-            score += 100;
+            score += 200;
+        }
+        
+        // Точное совпадение в ключе - очень высокий приоритет
+        if (keyLower === queryLower) {
+            score += 150;
         }
         
         // Название начинается с запроса
         if (nameLower.startsWith(queryLower)) {
-            score += 50;
+            score += 80;
+        }
+        
+        // Ключ начинается с запроса
+        if (keyLower.startsWith(queryLower)) {
+            score += 60;
         }
         
         // Подсчет вхождений в названии
         const nameMatches = this.countMatches(nameLower, queryLower);
         if (nameMatches > 0) {
-            score += 30 + (nameMatches * 5); // Базовые 30 + 5 за каждое вхождение
+            score += 50 + (nameMatches * 10); // Базовые 50 + 10 за каждое вхождение
         }
         
         // Подсчет вхождений в ключе
         const keyMatches = this.countMatches(keyLower, queryLower);
         if (keyMatches > 0) {
-            score += 20 + (keyMatches * 3); // Базовые 20 + 3 за каждое вхождение
+            score += 30 + (keyMatches * 5); // Базовые 30 + 5 за каждое вхождение
         }
         
         // Подсчет вхождений в описании
