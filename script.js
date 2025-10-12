@@ -35,24 +35,12 @@ const CSS_CLASSES = {
 
 /**
  * Утилиты для работы с URL параметрами
- * Применяет принцип Single Responsibility - отвечает только за работу с URL
  */
 class URLUtils {
-    /**
-     * Получает значение параметра из URL
-     * @param {string} param - Название параметра
-     * @returns {string|null} Значение параметра или null
-     */
     static getURLParameter(param) {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get(param);
+        return new URLSearchParams(window.location.search).get(param);
     }
 
-    /**
-     * Устанавливает параметр в URL без перезагрузки страницы
-     * @param {string} param - Название параметра
-     * @param {string} value - Значение параметра
-     */
     static setURLParameter(param, value) {
         const url = new URL(window.location);
         if (value) {
@@ -63,19 +51,12 @@ class URLUtils {
         window.history.pushState({}, '', url);
     }
 
-    /**
-     * Очищает все параметры из URL
-     */
     static clearURLParameters() {
         const url = new URL(window.location);
         url.search = '';
         window.history.pushState({}, '', url);
     }
 
-    /**
-     * Получает все параметры поиска
-     * @returns {Object} Объект с параметрами поиска
-     */
     static getSearchParams() {
         return {
             query: this.getURLParameter(APP_CONFIG.SEARCH_PARAM_KEY) || '',
@@ -83,11 +64,6 @@ class URLUtils {
         };
     }
 
-    /**
-     * Устанавливает параметры поиска
-     * @param {string} query - Поисковый запрос
-     * @param {number} page - Номер страницы (опционально)
-     */
     static setSearchParams(query, page = APP_CONFIG.DEFAULT_PAGE) {
         this.setURLParameter(APP_CONFIG.SEARCH_PARAM_KEY, query);
         if (page > APP_CONFIG.DEFAULT_PAGE) {
@@ -100,27 +76,16 @@ class URLUtils {
 
 /**
  * Утилиты для работы с текстом и поиском
- * Применяет принцип Single Responsibility - отвечает только за обработку текста
  */
 class TextUtils {
-    /**
-     * Подсвечивает совпадения в тексте
-     * @param {string} text - Исходный текст
-     * @param {string} query - Поисковый запрос
-     * @param {string} className - CSS класс для подсветки
-     * @returns {string} Текст с подсветкой
-     */
     static highlightMatches(text, query, className = CSS_CLASSES.HIGHLIGHT) {
-        if (!this.isValidText(text) || !this.isValidQuery(query)) {
-            return text || '';
-        }
+        if (!text || !query) return text || '';
         
-        // Разбиваем запрос на слова для подсветки каждого слова
         const queryWords = query.split(/\s+/).filter(word => word.length > 0);
         let highlightedText = text;
         
         queryWords.forEach(word => {
-            const escapedWord = this.escapeRegExp(word);
+            const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const regex = new RegExp(`(${escapedWord})`, 'gi');
             highlightedText = highlightedText.replace(regex, `<span class="${className}">$1</span>`);
         });
@@ -128,61 +93,14 @@ class TextUtils {
         return highlightedText;
     }
 
-    /**
-     * Очищает HTML теги и специальные символы из текста
-     * @param {string} text - Исходный текст
-     * @returns {string} Очищенный текст
-     */
     static cleanText(text) {
-        if (!this.isValidText(text)) {
-            return '';
-        }
+        if (!text) return '';
         
-        return this.applyTextCleaners(text);
-    }
-
-    /**
-     * Проверяет валидность текста
-     * @param {string} text - Текст для проверки
-     * @returns {boolean} true если текст валиден
-     */
-    static isValidText(text) {
-        return typeof text === 'string' && text.length > 0;
-    }
-
-    /**
-     * Проверяет валидность поискового запроса
-     * @param {string} query - Запрос для проверки
-     * @returns {boolean} true если запрос валиден
-     */
-    static isValidQuery(query) {
-        return typeof query === 'string' && query.trim().length > 0;
-    }
-
-    /**
-     * Экранирует специальные символы для регулярных выражений
-     * @param {string} string - Строка для экранирования
-     * @returns {string} Экранированная строка
-     */
-    static escapeRegExp(string) {
-        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    }
-
-    /**
-     * Применяет все очистители текста
-     * @param {string} text - Исходный текст
-     * @returns {string} Очищенный текст
-     */
-    static applyTextCleaners(text) {
-        const cleaners = [
-            { pattern: /<[^>]*>/g, replacement: '' }, // HTML теги
-            { pattern: /@UUID\[[^\]]*\]/g, replacement: '' }, // UUID ссылки
-            { pattern: /@Trait\[[^\]]*\]/g, replacement: '' } // Trait ссылки
-        ];
-
-        return cleaners.reduce((cleanedText, cleaner) => {
-            return cleanedText.replace(cleaner.pattern, cleaner.replacement);
-        }, text).trim();
+        return text
+            .replace(/<[^>]*>/g, '') // HTML теги
+            .replace(/@UUID\[[^\]]*\]/g, '') // UUID ссылки
+            .replace(/@Trait\[[^\]]*\]/g, '') // Trait ссылки
+            .trim();
     }
 }
 
@@ -206,20 +124,12 @@ class ItemSearch {
      * @returns {Array} Массив найденных предметов
      */
     search(query) {
-        console.log('ItemSearch.search вызван с запросом:', query);
-        
         if (!this.isValidQuery(query)) {
-            console.log('Невалидный запрос');
             return [];
         }
         
         const normalizedQuery = this.normalizeQuery(query);
-        console.log('Нормализованный запрос:', normalizedQuery);
-        
-        const results = this.performSearch(normalizedQuery);
-        console.log('Результаты поиска:', results.length, 'предметов');
-        
-        return results;
+        return this.performSearch(normalizedQuery);
     }
 
     /**
@@ -253,14 +163,9 @@ class ItemSearch {
             );
         });
 
-        // Ранжируем результаты по релевантности
+        // Ранжируем и ограничиваем результаты
         const rankedItems = this.rankResults(matchingItems, normalizedQuery);
-        
-        // Ограничиваем количество результатов
-        const maxResults = 50;
-        const limitedItems = rankedItems.slice(0, maxResults);
-        
-        return this.mapToSearchResults(limitedItems);
+        return this.mapToSearchResults(rankedItems.slice(0, 50));
     }
 
     /**
@@ -320,77 +225,44 @@ class ItemSearch {
 
     /**
      * Поиск по названию предмета
-     * @param {Object} item - Данные предмета
-     * @param {string} key - Ключ предмета
-     * @param {string} query - Поисковый запрос
-     * @returns {boolean} true если найдено совпадение
      */
     searchByName(item, key, query) {
-        const name = item.name || '';
-        return this.fuzzySearch(name, query);
+        return item.name && this.fuzzySearch(item.name, query);
     }
 
     /**
      * Поиск по описанию предмета
-     * @param {Object} item - Данные предмета
-     * @param {string} key - Ключ предмета
-     * @param {string} query - Поисковый запрос
-     * @returns {boolean} true если найдено совпадение
      */
     searchByDescription(item, key, query) {
-        const description = item.description || '';
-        return this.fuzzySearch(description, query);
+        return item.description && this.fuzzySearch(item.description, query);
     }
 
     /**
      * Поиск по ключу предмета
-     * @param {Object} item - Данные предмета
-     * @param {string} key - Ключ предмета
-     * @param {string} query - Поисковый запрос
-     * @returns {boolean} true если найдено совпадение
      */
     searchByKey(item, key, query) {
-        return this.fuzzySearch(key, query);
+        return key && this.fuzzySearch(key, query);
     }
 
 
     /**
      * Нечеткий поиск - ищет по отдельным словам
-     * @param {string} text - Текст для поиска
-     * @param {string} query - Поисковый запрос
-     * @returns {boolean} true если найдено совпадение
      */
     fuzzySearch(text, query) {
+        if (!text || !query) return false;
+        
         const textLower = text.toLowerCase();
-        const queryWords = query.split(/\s+/).filter(word => word.length > 0);
+        const queryWords = query.split(/\s+/).filter(word => word.length >= 2);
         
-        // Если запрос пустой, возвращаем false
-        if (queryWords.length === 0) {
-            return false;
-        }
-        
-        // Минимальная длина слова для поиска
-        const minWordLength = 2;
-        
-        // Проверяем, что все слова из запроса найдены в тексте
         return queryWords.every(word => {
-            // Пропускаем слишком короткие слова
-            if (word.length < minWordLength) {
-                return false;
-            }
+            if (textLower.includes(word)) return true;
             
-            // Точное совпадение
-            if (textLower.includes(word)) {
-                return true;
-            }
-            
-            // Частичное совпадение только для слов длиннее 4 символов
+            // Частичное совпадение для длинных слов
             if (word.length > 4) {
                 return textLower.split(/\s+/).some(textWord => 
                     textWord.startsWith(word) || word.startsWith(textWord)
                 );
             }
-            
             return false;
         });
     }
@@ -411,45 +283,15 @@ class ItemSearch {
 
 /**
  * Класс для управления уведомлениями
- * Применяет принцип Single Responsibility - отвечает только за уведомления
  */
 class NotificationManager {
-    /**
-     * Показывает уведомление пользователю
-     * @param {string} message - Сообщение для показа
-     * @param {string} type - Тип уведомления (success, error, warning)
-     * @param {number} duration - Длительность показа в миллисекундах
-     */
     static show(message, type = 'success', duration = APP_CONFIG.NOTIFICATION_DURATION) {
-        const notification = this.createNotification(message, type);
-        this.displayNotification(notification);
-        this.scheduleRemoval(notification, duration);
-    }
-
-    /**
-     * Создает элемент уведомления
-     * @param {string} message - Сообщение
-     * @param {string} type - Тип уведомления
-     * @returns {HTMLElement} Элемент уведомления
-     */
-    static createNotification(message, type) {
         const notification = document.createElement('div');
         notification.className = `notification notification-${type}`;
         notification.textContent = message;
         
-        const styles = this.getNotificationStyles(type);
-        Object.assign(notification.style, styles);
-        
-        return notification;
-    }
-
-    /**
-     * Получает стили для уведомления
-     * @param {string} type - Тип уведомления
-     * @returns {Object} Стили
-     */
-    static getNotificationStyles(type) {
-        const baseStyles = {
+        // Стили уведомления
+        Object.assign(notification.style, {
             position: 'fixed',
             top: '20px',
             right: '20px',
@@ -461,48 +303,21 @@ class NotificationManager {
             animation: 'slideIn 0.3s ease',
             maxWidth: '300px',
             wordWrap: 'break-word',
-            color: 'white'
-        };
-
-        const typeStyles = {
-            success: { backgroundColor: 'var(--success)' },
-            error: { backgroundColor: 'var(--error)' },
-            warning: { backgroundColor: 'var(--warning)' }
-        };
-
-        return { ...baseStyles, ...typeStyles[type] };
-    }
-
-    /**
-     * Отображает уведомление на странице
-     * @param {HTMLElement} notification - Элемент уведомления
-     */
-    static displayNotification(notification) {
+            color: 'white',
+            backgroundColor: type === 'success' ? 'var(--success)' : 
+                           type === 'error' ? 'var(--error)' : 'var(--warning)'
+        });
+        
         document.body.appendChild(notification);
-    }
-
-    /**
-     * Планирует удаление уведомления
-     * @param {HTMLElement} notification - Элемент уведомления
-     * @param {number} duration - Длительность показа
-     */
-    static scheduleRemoval(notification, duration) {
+        
         setTimeout(() => {
-            this.removeNotification(notification);
+            notification.style.animation = `slideOut ${APP_CONFIG.ANIMATION_DURATION}ms ease`;
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, APP_CONFIG.ANIMATION_DURATION);
         }, duration);
-    }
-
-    /**
-     * Удаляет уведомление с анимацией
-     * @param {HTMLElement} notification - Элемент уведомления
-     */
-    static removeNotification(notification) {
-        notification.style.animation = `slideOut ${APP_CONFIG.ANIMATION_DURATION}ms ease`;
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        }, APP_CONFIG.ANIMATION_DURATION);
     }
 }
 
@@ -517,25 +332,11 @@ class SearchUI {
         this.button = document.querySelector(DOM_SELECTORS.BUTTON);
         this.resultDiv = document.querySelector(DOM_SELECTORS.RESULT);
         
-        this.validateElements();
+        if (!this.input || !this.button || !this.resultDiv) {
+            throw new Error('Не найдены обязательные DOM элементы');
+        }
+        
         this.init();
-    }
-
-    /**
-     * Проверяет наличие необходимых DOM элементов
-     */
-    validateElements() {
-        const requiredElements = [
-            { element: this.input, name: 'input' },
-            { element: this.button, name: 'button' },
-            { element: this.resultDiv, name: 'result' }
-        ];
-
-        requiredElements.forEach(({ element, name }) => {
-            if (!element) {
-                throw new Error(`Не найден обязательный элемент: ${name}`);
-            }
-        });
     }
 
     /**
@@ -618,18 +419,11 @@ class SearchUI {
      * @param {string} query - Поисковый запрос
      */
     displayResults(results, query) {
-        console.log('displayResults вызван:', {
-            resultsCount: results.length,
-            query: query
-        });
-        
         if (results.length === 0) {
-            console.log('Нет результатов, показываем сообщение об отсутствии результатов');
             this.showNoResults(query);
             return;
         }
         
-        console.log('Есть результаты, отображаем их');
         let html = `
             <div class="share-section">
                 <button class="share-button" onclick="window.shareResults('${query}')" title="Скопировать ссылку с результатами поиска">
@@ -716,30 +510,19 @@ class SearchUI {
 
 /**
  * Главный класс приложения
- * Применяет принцип Dependency Injection и Facade Pattern
  */
 class PF2ESearchApp {
     constructor() {
         this.searchEngine = new ItemSearch(items);
         this.ui = null;
-        this.isInitialized = false;
     }
 
-    /**
-     * Инициализация приложения
-     * Применяет принцип Single Responsibility - отвечает только за инициализацию
-     */
     init() {
-        if (this.isInitialized) {
-            return;
-        }
-        
         const initializeApp = () => {
             try {
-                this.initializeComponents();
+                this.ui = new SearchUI(this.searchEngine);
                 this.setupGlobalHandlers();
                 this.setupEventListeners();
-                this.isInitialized = true;
             } catch (error) {
                 console.error('Ошибка при инициализации:', error);
             }
@@ -748,47 +531,19 @@ class PF2ESearchApp {
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initializeApp);
         } else {
-            // DOM уже загружен
             initializeApp();
         }
     }
 
-    /**
-     * Инициализирует компоненты приложения
-     */
-    initializeComponents() {
-        this.ui = new SearchUI(this.searchEngine);
-    }
-
-    /**
-     * Настраивает глобальные обработчики
-     */
     setupGlobalHandlers() {
-        // Делаем функции доступными глобально для onclick обработчиков
         window.shareResults = (query) => this.ui.shareResults(query);
         window.clearSearch = () => this.ui.clearSearch();
     }
 
-    /**
-     * Настраивает обработчики событий
-     */
     setupEventListeners() {
-        // Обработка кнопки "Назад" в браузере
         window.addEventListener('popstate', () => {
             this.ui.loadFromURL();
         });
-    }
-
-    /**
-     * Получает состояние приложения
-     * @returns {Object} Состояние приложения
-     */
-    getState() {
-        return {
-            isInitialized: this.isInitialized,
-            hasUI: this.ui !== null,
-            hasSearchEngine: this.searchEngine !== null
-        };
     }
 }
 
