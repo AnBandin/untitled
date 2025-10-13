@@ -1,5 +1,5 @@
 // Импортируем данные предметов из отдельного файла
-import items from './newItems.js';
+import items from './items.js';
 
 
 /**
