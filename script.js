@@ -613,7 +613,7 @@ class SearchUI {
         const highlightedNameRus = TextUtils.highlightMatches(item.nameRus || '', query, CSS_CLASSES.HIGHLIGHT_NAME);
         const highlightedDescription = TextUtils.highlightMatches(cleanDescription, query, CSS_CLASSES.HIGHLIGHT_DESCRIPTION);
         
-        const aonUrl = `https://2e.aonprd.com/Search.aspx?q=${encodeURIComponent(item._id)}`;
+        const aonUrl = `https://2e.aonprd.com/Search.aspx?q=${encodeURIComponent(item.name)}`;
         const highlightedId = TextUtils.highlightMatches(item._id, query, CSS_CLASSES.HIGHLIGHT);
         const clickableId = `<a href="${aonUrl}" target="_blank" title="Открыть в Archives of Nethys">${highlightedId}</a>`;
         
