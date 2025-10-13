@@ -20,7 +20,11 @@ const APP_CONFIG = {
 const DOM_SELECTORS = {
     INPUT: '#userInput',
     BUTTON: '#searchButton',
-    RESULT: '#result'
+    RESULT: '#result',
+    LEVEL_FILTER: '#levelFilter',
+    PRICE_RANGE: '#priceRange',
+    PRICE_VALUE: '#priceValue',
+    CLEAR_FILTERS: '#clearFilters'
 };
 
 /**
@@ -472,10 +476,19 @@ class SearchUI {
         this.input = document.querySelector(DOM_SELECTORS.INPUT);
         this.button = document.querySelector(DOM_SELECTORS.BUTTON);
         this.resultDiv = document.querySelector(DOM_SELECTORS.RESULT);
+        this.levelFilter = document.querySelector(DOM_SELECTORS.LEVEL_FILTER);
+        this.priceRange = document.querySelector(DOM_SELECTORS.PRICE_RANGE);
+        this.priceValue = document.querySelector(DOM_SELECTORS.PRICE_VALUE);
+        this.clearFilters = document.querySelector(DOM_SELECTORS.CLEAR_FILTERS);
         
         if (!this.input || !this.button || !this.resultDiv) {
             throw new Error('Не найдены обязательные DOM элементы');
         }
+        
+        this.filters = {
+            level: '',
+            maxPrice: 10000
+        };
         
         this.init();
     }
@@ -504,6 +517,32 @@ class SearchUI {
         this.button.addEventListener('click', () => {
             this.performSearch();
         });
+
+        // Обработка фильтра по уровню
+        if (this.levelFilter) {
+            this.levelFilter.addEventListener('change', () => {
+                this.filters.level = this.levelFilter.value;
+                this.performSearch();
+            });
+        }
+
+        // Обработка ползунка цены
+        if (this.priceRange) {
+            this.priceRange.addEventListener('input', () => {
+                this.filters.maxPrice = parseInt(this.priceRange.value);
+                if (this.priceValue) {
+                    this.priceValue.textContent = this.filters.maxPrice;
+                }
+                this.performSearch();
+            });
+        }
+
+        // Обработка очистки фильтров
+        if (this.clearFilters) {
+            this.clearFilters.addEventListener('click', () => {
+                this.clearAllFilters();
+            });
+        }
     }
 
     /**
@@ -532,7 +571,8 @@ class SearchUI {
         }
         
         const results = this.searchEngine.search(query);
-        this.displayResults(results, query);
+        const filteredResults = this.applyFilters(results);
+        this.displayResults(filteredResults, query);
     }
 
     /**
@@ -673,10 +713,63 @@ class SearchUI {
     }
 
     /**
+     * Применяет фильтры к результатам поиска
+     * @param {Array} results - Результаты поиска
+     * @returns {Array} Отфильтрованные результаты
+     */
+    applyFilters(results) {
+        return results.filter(item => {
+            // Фильтр по уровню
+            if (this.filters.level !== '') {
+                const itemLevel = item.system?.level?.value;
+                if (itemLevel !== parseInt(this.filters.level)) {
+                    return false;
+                }
+            }
+
+            // Фильтр по цене
+            if (this.filters.maxPrice < 10000) {
+                const priceValue = item.system?.price?.value;
+                if (priceValue && priceValue.gp) {
+                    if (priceValue.gp > this.filters.maxPrice) {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        });
+    }
+
+    /**
+     * Очищает все фильтры
+     */
+    clearAllFilters() {
+        this.filters.level = '';
+        this.filters.maxPrice = 10000;
+        
+        if (this.levelFilter) {
+            this.levelFilter.value = '';
+        }
+        
+        if (this.priceRange) {
+            this.priceRange.value = '10000';
+        }
+        
+        if (this.priceValue) {
+            this.priceValue.textContent = '10000';
+        }
+        
+        // Перезапускаем поиск
+        this.performSearch();
+    }
+
+    /**
      * Очищает поиск и возвращает к начальному состоянию
      */
     clearSearch() {
         this.input.value = '';
+        this.clearAllFilters();
         URLUtils.clearURLParameters();
         this.showEmptyState();
     }

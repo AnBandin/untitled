@@ -38,6 +38,60 @@
                         Поиск работает по названию, описанию и ID предмета
                     </small>
                 </div>
+                
+                <div class="filters-section">
+                    <div class="filter-group">
+                        <label for="levelFilter">Уровень предмета</label>
+                        <select id="levelFilter" class="filter-select">
+                            <option value="">Все уровни</option>
+                            <option value="0">0 уровень</option>
+                            <option value="1">1 уровень</option>
+                            <option value="2">2 уровень</option>
+                            <option value="3">3 уровень</option>
+                            <option value="4">4 уровень</option>
+                            <option value="5">5 уровень</option>
+                            <option value="6">6 уровень</option>
+                            <option value="7">7 уровень</option>
+                            <option value="8">8 уровень</option>
+                            <option value="9">9 уровень</option>
+                            <option value="10">10 уровень</option>
+                            <option value="11">11 уровень</option>
+                            <option value="12">12 уровень</option>
+                            <option value="13">13 уровень</option>
+                            <option value="14">14 уровень</option>
+                            <option value="15">15 уровень</option>
+                            <option value="16">16 уровень</option>
+                            <option value="17">17 уровень</option>
+                            <option value="18">18 уровень</option>
+                            <option value="19">19 уровень</option>
+                            <option value="20">20 уровень</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="priceRange">Максимальная цена (GP)</label>
+                        <div class="price-range-container">
+                            <input 
+                                type="range" 
+                                id="priceRange" 
+                                min="0" 
+                                max="10000" 
+                                step="50" 
+                                value="10000"
+                                class="price-slider"
+                            >
+                            <div class="price-display">
+                                <span id="priceValue">10000</span> GP
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-actions">
+                        <button type="button" id="clearFilters" class="clear-filters-btn">
+                            🗑️ Очистить фильтры
+                        </button>
+                    </div>
+                </div>
             </form>
         </section>
         
