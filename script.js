@@ -23,7 +23,10 @@ const DOM_SELECTORS = {
     RESULT: '#result',
     MAX_LEVEL_INPUT: '#maxLevelInput',
     MAX_PRICE_INPUT: '#maxPriceInput',
-    CLEAR_FILTERS: '#clearFilters'
+    CLEAR_FILTERS: '#clearFilters',
+    PP_VALUE: '#ppValue',
+    SP_VALUE: '#spValue',
+    CP_VALUE: '#cpValue'
 };
 
 /**
@@ -478,6 +481,9 @@ class SearchUI {
         this.maxLevelInput = document.querySelector(DOM_SELECTORS.MAX_LEVEL_INPUT);
         this.maxPriceInput = document.querySelector(DOM_SELECTORS.MAX_PRICE_INPUT);
         this.clearFilters = document.querySelector(DOM_SELECTORS.CLEAR_FILTERS);
+        this.ppValue = document.querySelector(DOM_SELECTORS.PP_VALUE);
+        this.spValue = document.querySelector(DOM_SELECTORS.SP_VALUE);
+        this.cpValue = document.querySelector(DOM_SELECTORS.CP_VALUE);
         
         if (!this.input || !this.button || !this.resultDiv) {
             throw new Error('Не найдены обязательные DOM элементы');
@@ -496,6 +502,7 @@ class SearchUI {
      */
     init() {
         this.bindEvents();
+        this.updatePriceConverter(); // Инициализируем конвертер
         this.loadFromURL();
     }
 
@@ -528,6 +535,7 @@ class SearchUI {
         if (this.maxPriceInput) {
             this.maxPriceInput.addEventListener('input', () => {
                 this.updatePriceFilter();
+                this.updatePriceConverter();
                 this.performSearch();
             });
         }
@@ -726,6 +734,23 @@ class SearchUI {
     }
 
     /**
+     * Обновляет отображение конвертера валют
+     */
+    updatePriceConverter() {
+        const gpValue = parseInt(this.maxPriceInput?.value) || 100;
+        
+        // Конвертируем GP в другие валюты
+        const ppValue = Math.round(gpValue / 10 * 100) / 100; // 1 PP = 10 GP
+        const spValue = Math.round(gpValue * 10 * 100) / 100; // 1 GP = 10 SP
+        const cpValue = Math.round(gpValue * 100 * 100) / 100; // 1 GP = 100 CP
+        
+        // Обновляем отображение
+        if (this.ppValue) this.ppValue.textContent = ppValue.toFixed(2);
+        if (this.spValue) this.spValue.textContent = spValue.toFixed(0);
+        if (this.cpValue) this.cpValue.textContent = cpValue.toFixed(0);
+    }
+
+    /**
      * Применяет фильтры к результатам поиска
      * @param {Array} results - Результаты поиска
      * @returns {Array} Отфильтрованные результаты
@@ -735,10 +760,8 @@ class SearchUI {
             // Фильтр по уровню
             const itemLevel = item.system?.level?.value;
             if (itemLevel !== null && itemLevel !== undefined) {
-                // Если maxLevel = 0, показываем все уровни
-                if (this.filters.maxLevel === 0) {
-                    // Показываем все уровни
-                } else if (itemLevel > this.filters.maxLevel) {
+                // Показываем предметы от 0 до maxLevel включительно
+                if (itemLevel > this.filters.maxLevel) {
                     return false;
                 }
             }
@@ -789,6 +812,9 @@ class SearchUI {
         if (this.maxPriceInput) {
             this.maxPriceInput.value = '100';
         }
+        
+        // Обновляем конвертер
+        this.updatePriceConverter();
         
         // Перезапускаем поиск
         this.performSearch();
