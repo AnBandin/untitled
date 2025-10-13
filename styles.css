@@ -187,7 +187,8 @@ button:active {
     background: #e3f2fd;
     padding: 4px 8px;
     border-radius: 3px;
-    display: inline-block;
+    display: flex;
+    gap: 5px;
     margin: 0;
     flex: 1;
     min-width: 0;
