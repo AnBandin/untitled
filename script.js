@@ -21,8 +21,8 @@ const DOM_SELECTORS = {
     INPUT: '#userInput',
     BUTTON: '#searchButton',
     RESULT: '#result',
-    LEVEL_SELECT: '#levelSelect',
-    MAX_PRICE_SELECT: '#maxPriceSelect',
+    MAX_LEVEL_INPUT: '#maxLevelInput',
+    MAX_PRICE_INPUT: '#maxPriceInput',
     CLEAR_FILTERS: '#clearFilters'
 };
 
@@ -475,8 +475,8 @@ class SearchUI {
         this.input = document.querySelector(DOM_SELECTORS.INPUT);
         this.button = document.querySelector(DOM_SELECTORS.BUTTON);
         this.resultDiv = document.querySelector(DOM_SELECTORS.RESULT);
-        this.levelSelect = document.querySelector(DOM_SELECTORS.LEVEL_SELECT);
-        this.maxPriceSelect = document.querySelector(DOM_SELECTORS.MAX_PRICE_SELECT);
+        this.maxLevelInput = document.querySelector(DOM_SELECTORS.MAX_LEVEL_INPUT);
+        this.maxPriceInput = document.querySelector(DOM_SELECTORS.MAX_PRICE_INPUT);
         this.clearFilters = document.querySelector(DOM_SELECTORS.CLEAR_FILTERS);
         
         if (!this.input || !this.button || !this.resultDiv) {
@@ -484,7 +484,7 @@ class SearchUI {
         }
         
         this.filters = {
-            levels: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+            maxLevel: 20,
             maxPrice: 1000 // в CP
         };
         
@@ -516,17 +516,17 @@ class SearchUI {
             this.performSearch();
         });
 
-        // Обработка select уровней
-        if (this.levelSelect) {
-            this.levelSelect.addEventListener('change', () => {
-                this.updateLevelFilters();
+        // Обработка input максимального уровня
+        if (this.maxLevelInput) {
+            this.maxLevelInput.addEventListener('input', () => {
+                this.updateLevelFilter();
                 this.performSearch();
             });
         }
 
-        // Обработка select максимальной цены
-        if (this.maxPriceSelect) {
-            this.maxPriceSelect.addEventListener('change', () => {
+        // Обработка input максимальной цены
+        if (this.maxPriceInput) {
+            this.maxPriceInput.addEventListener('input', () => {
                 this.updatePriceFilter();
                 this.performSearch();
             });
@@ -708,13 +708,11 @@ class SearchUI {
     }
 
     /**
-     * Обновляет фильтры уровней на основе select
+     * Обновляет фильтр максимального уровня
      */
-    updateLevelFilters() {
-        this.filters.levels = [];
-        if (this.levelSelect) {
-            const selectedOptions = Array.from(this.levelSelect.selectedOptions);
-            this.filters.levels = selectedOptions.map(option => parseInt(option.value));
+    updateLevelFilter() {
+        if (this.maxLevelInput) {
+            this.filters.maxLevel = parseInt(this.maxLevelInput.value) || 20;
         }
     }
 
@@ -722,8 +720,8 @@ class SearchUI {
      * Обновляет фильтр максимальной цены
      */
     updatePriceFilter() {
-        if (this.maxPriceSelect) {
-            this.filters.maxPrice = parseInt(this.maxPriceSelect.value);
+        if (this.maxPriceInput) {
+            this.filters.maxPrice = parseInt(this.maxPriceInput.value) || 1000;
         }
     }
 
@@ -737,7 +735,10 @@ class SearchUI {
             // Фильтр по уровню
             const itemLevel = item.system?.level?.value;
             if (itemLevel !== null && itemLevel !== undefined) {
-                if (!this.filters.levels.includes(itemLevel)) {
+                // Если maxLevel = 0, показываем все уровни
+                if (this.filters.maxLevel === 0) {
+                    // Показываем все уровни
+                } else if (itemLevel > this.filters.maxLevel) {
                     return false;
                 }
             }
@@ -776,19 +777,17 @@ class SearchUI {
      * Очищает все фильтры
      */
     clearAllFilters() {
-        this.filters.levels = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20];
+        this.filters.maxLevel = 20;
         this.filters.maxPrice = 1000; // 1 GP в CP
         
-        // Сбрасываем select уровней - выбираем все опции
-        if (this.levelSelect) {
-            Array.from(this.levelSelect.options).forEach(option => {
-                option.selected = true;
-            });
+        // Сбрасываем input максимального уровня
+        if (this.maxLevelInput) {
+            this.maxLevelInput.value = '20';
         }
         
-        // Сбрасываем select максимальной цены
-        if (this.maxPriceSelect) {
-            this.maxPriceSelect.value = '1000';
+        // Сбрасываем input максимальной цены
+        if (this.maxPriceInput) {
+            this.maxPriceInput.value = '1000';
         }
         
         // Перезапускаем поиск

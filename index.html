@@ -41,54 +41,31 @@
                 
                 <div class="filters-section">
                     <div class="filter-group">
-                        <label for="levelSelect">Уровень предмета</label>
-                        <select id="levelSelect" multiple class="filter-select">
-                            <option value="0" selected>0</option>
-                            <option value="1" selected>1</option>
-                            <option value="2" selected>2</option>
-                            <option value="3" selected>3</option>
-                            <option value="4" selected>4</option>
-                            <option value="5" selected>5</option>
-                            <option value="6" selected>6</option>
-                            <option value="7" selected>7</option>
-                            <option value="8" selected>8</option>
-                            <option value="9" selected>9</option>
-                            <option value="10" selected>10</option>
-                            <option value="11" selected>11</option>
-                            <option value="12" selected>12</option>
-                            <option value="13" selected>13</option>
-                            <option value="14" selected>14</option>
-                            <option value="15" selected>15</option>
-                            <option value="16" selected>16</option>
-                            <option value="17" selected>17</option>
-                            <option value="18" selected>18</option>
-                            <option value="19" selected>19</option>
-                            <option value="20" selected>20</option>
-                        </select>
-                        <small class="input-help">Удерживайте Ctrl (Cmd на Mac) для выбора нескольких уровней</small>
+                        <label for="maxLevelInput">Максимальный уровень</label>
+                        <input 
+                            type="number" 
+                            id="maxLevelInput" 
+                            min="0" 
+                            max="20" 
+                            value="20" 
+                            class="filter-input"
+                            placeholder="0 = все уровни"
+                        >
+                        <small class="input-help">0 = все уровни, 2 = уровни 0-2, 20 = все уровни 0-20</small>
                     </div>
                     
                     <div class="filter-group">
-                        <label for="maxPriceSelect">Максимальная цена</label>
-                        <select id="maxPriceSelect" class="filter-select">
-                            <option value="10">10 CP</option>
-                            <option value="20">20 CP</option>
-                            <option value="50">50 CP</option>
-                            <option value="100">1 SP (100 CP)</option>
-                            <option value="200">2 SP (200 CP)</option>
-                            <option value="500">5 SP (500 CP)</option>
-                            <option value="1000" selected>1 GP (1000 CP)</option>
-                            <option value="2000">2 GP (2000 CP)</option>
-                            <option value="5000">5 GP (5000 CP)</option>
-                            <option value="10000">10 GP (10000 CP)</option>
-                            <option value="20000">20 GP (20000 CP)</option>
-                            <option value="50000">50 GP (50000 CP)</option>
-                            <option value="100000">100 GP (100000 CP)</option>
-                            <option value="200000">200 GP (200000 CP)</option>
-                            <option value="500000">500 GP (500000 CP)</option>
-                            <option value="1000000">1000 GP (1000000 CP)</option>
-                        </select>
-                        <small class="input-help">Соотношение: 1 GP = 10 SP = 100 CP</small>
+                        <label for="maxPriceInput">Максимальная цена (в CP)</label>
+                        <input 
+                            type="number" 
+                            id="maxPriceInput" 
+                            min="0" 
+                            max="1000000" 
+                            value="1000" 
+                            class="filter-input"
+                            placeholder="1000 = 1 GP"
+                        >
+                        <small class="input-help">Соотношение: 1 GP = 1000 CP, 1 SP = 100 CP</small>
                     </div>
                     
                     <div class="filter-actions">

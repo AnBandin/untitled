@@ -523,8 +523,8 @@ button span {
     box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
 }
 
-/* ===== SELECT ЭЛЕМЕНТЫ ===== */
-.filter-select {
+/* ===== INPUT ЭЛЕМЕНТЫ ФИЛЬТРОВ ===== */
+.filter-input {
     width: 100%;
     padding: 10px 12px;
     border: 2px solid var(--border-light);
@@ -532,36 +532,35 @@ button span {
     font-size: 14px;
     background-color: var(--surface);
     transition: all var(--transition);
-    cursor: pointer;
+    box-sizing: border-box;
 }
 
-.filter-select:focus {
+.filter-input:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+    transform: translateY(-1px);
 }
 
-.filter-select[multiple] {
-    min-height: 120px;
-    max-height: 200px;
-    overflow-y: auto;
+.filter-input:hover {
+    border-color: var(--primary-color);
 }
 
-.filter-select[multiple] option {
-    padding: 8px 12px;
-    margin: 2px 0;
-    border-radius: 3px;
-    transition: all var(--transition);
-}
-
-.filter-select[multiple] option:hover {
-    background-color: var(--border-light);
-}
-
-.filter-select[multiple] option:checked {
-    background-color: var(--primary-color);
-    color: white;
+/* Стили для number input */
+.filter-input[type="number"] {
+    text-align: center;
     font-weight: 600;
+    color: var(--text-color);
+}
+
+.filter-input[type="number"]::-webkit-outer-spin-button,
+.filter-input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.filter-input[type="number"] {
+    -moz-appearance: textfield;
 }
 
 /* ===== СТИЛИ ДЛЯ НОВОЙ СИСТЕМЫ ЦЕН ===== */
@@ -636,14 +635,13 @@ button span {
         margin-bottom: var(--spacing-sm);
     }
     
-    .filter-select[multiple] {
-        min-height: 100px;
-        max-height: 150px;
+    .filter-input {
+        font-size: 16px; /* Предотвращает зум на iOS */
+        padding: 12px 8px;
     }
     
-    .filter-select[multiple] option {
-        padding: 6px 8px;
-        font-size: 0.9rem;
+    .filter-input[type="number"] {
+        font-size: 18px; /* Больше размер для лучшего UX на мобильных */
     }
 }
 
