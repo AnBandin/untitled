@@ -485,7 +485,7 @@ class SearchUI {
         
         this.filters = {
             maxLevel: 20,
-            maxPrice: 1000 // в CP
+            maxPrice: 100 // в GP
         };
         
         this.init();
@@ -721,7 +721,7 @@ class SearchUI {
      */
     updatePriceFilter() {
         if (this.maxPriceInput) {
-            this.filters.maxPrice = parseInt(this.maxPriceInput.value) || 1000;
+            this.filters.maxPrice = parseInt(this.maxPriceInput.value) || 100;
         }
     }
 
@@ -746,8 +746,8 @@ class SearchUI {
             // Фильтр по цене
             const priceValue = item.system?.price?.value;
             if (priceValue) {
-                const itemPriceInCP = this.convertPriceToCP(priceValue);
-                if (itemPriceInCP > this.filters.maxPrice) {
+                const itemPriceInGP = this.convertPriceToGP(priceValue);
+                if (itemPriceInGP > this.filters.maxPrice) {
                     return false;
                 }
             }
@@ -757,20 +757,20 @@ class SearchUI {
     }
 
     /**
-     * Конвертирует цену предмета в CP (медные монеты)
+     * Конвертирует цену предмета в GP (золотые монеты)
      * @param {Object} priceValue - Объект с ценой предмета
-     * @returns {number} Цена в CP
+     * @returns {number} Цена в GP
      */
-    convertPriceToCP(priceValue) {
-        let totalCP = 0;
+    convertPriceToGP(priceValue) {
+        let totalGP = 0;
         
-        // Конвертируем все валюты в CP
-        if (priceValue.pp) totalCP += priceValue.pp * 10000; // 1 PP = 10000 CP
-        if (priceValue.gp) totalCP += priceValue.gp * 1000;  // 1 GP = 1000 CP  
-        if (priceValue.sp) totalCP += priceValue.sp * 100;  // 1 SP = 100 CP
-        if (priceValue.cp) totalCP += priceValue.cp;        // 1 CP = 1 CP
+        // Конвертируем все валюты в GP
+        if (priceValue.pp) totalGP += priceValue.pp * 10;     // 1 PP = 10 GP
+        if (priceValue.gp) totalGP += priceValue.gp;        // 1 GP = 1 GP
+        if (priceValue.sp) totalGP += priceValue.sp * 0.1;   // 1 SP = 0.1 GP
+        if (priceValue.cp) totalGP += priceValue.cp * 0.01;  // 1 CP = 0.01 GP
         
-        return totalCP;
+        return totalGP;
     }
 
     /**
@@ -778,7 +778,7 @@ class SearchUI {
      */
     clearAllFilters() {
         this.filters.maxLevel = 20;
-        this.filters.maxPrice = 1000; // 1 GP в CP
+        this.filters.maxPrice = 100; // 100 GP
         
         // Сбрасываем input максимального уровня
         if (this.maxLevelInput) {
@@ -787,7 +787,7 @@ class SearchUI {
         
         // Сбрасываем input максимальной цены
         if (this.maxPriceInput) {
-            this.maxPriceInput.value = '1000';
+            this.maxPriceInput.value = '100';
         }
         
         // Перезапускаем поиск
