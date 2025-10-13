@@ -192,7 +192,7 @@ button:active {
     margin: 0;
     flex: 1;
     min-width: 0;
-    max-width: 60%;
+    max-width: fit-content;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
