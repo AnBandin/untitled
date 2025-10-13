@@ -24,6 +24,7 @@ const DOM_SELECTORS = {
     MAX_LEVEL_INPUT: '#maxLevelInput',
     MAX_PRICE_INPUT: '#maxPriceInput',
     CLEAR_FILTERS: '#clearFilters',
+    SORT_BY_PRICE: '#sortByPrice',
     PP_VALUE: '#ppValue',
     SP_VALUE: '#spValue',
     CP_VALUE: '#cpValue'
@@ -481,6 +482,7 @@ class SearchUI {
         this.maxLevelInput = document.querySelector(DOM_SELECTORS.MAX_LEVEL_INPUT);
         this.maxPriceInput = document.querySelector(DOM_SELECTORS.MAX_PRICE_INPUT);
         this.clearFilters = document.querySelector(DOM_SELECTORS.CLEAR_FILTERS);
+        this.sortByPrice = document.querySelector(DOM_SELECTORS.SORT_BY_PRICE);
         this.ppValue = document.querySelector(DOM_SELECTORS.PP_VALUE);
         this.spValue = document.querySelector(DOM_SELECTORS.SP_VALUE);
         this.cpValue = document.querySelector(DOM_SELECTORS.CP_VALUE);
@@ -491,7 +493,8 @@ class SearchUI {
         
         this.filters = {
             maxLevel: 20,
-            maxPrice: 100 // в GP
+            maxPrice: 100, // в GP
+            sortByPrice: false
         };
         
         this.init();
@@ -536,6 +539,14 @@ class SearchUI {
             this.maxPriceInput.addEventListener('input', () => {
                 this.updatePriceFilter();
                 this.updatePriceConverter();
+                this.performSearch();
+            });
+        }
+
+        // Обработка сортировки по цене
+        if (this.sortByPrice) {
+            this.sortByPrice.addEventListener('click', () => {
+                this.togglePriceSort();
                 this.performSearch();
             });
         }
@@ -751,12 +762,25 @@ class SearchUI {
     }
 
     /**
+     * Переключает сортировку по цене
+     */
+    togglePriceSort() {
+        this.filters.sortByPrice = !this.filters.sortByPrice;
+        
+        // Обновляем текст кнопки
+        if (this.sortByPrice) {
+            this.sortByPrice.textContent = this.filters.sortByPrice ? 
+                '💰 Сортировка по цене: ВКЛ' : '💰 Сортировать по цене';
+        }
+    }
+
+    /**
      * Применяет фильтры к результатам поиска
      * @param {Array} results - Результаты поиска
      * @returns {Array} Отфильтрованные результаты
      */
     applyFilters(results) {
-        return results.filter(item => {
+        let filteredResults = results.filter(item => {
             // Фильтр по уровню
             const itemLevel = item.system?.level?.value;
             if (itemLevel !== null && itemLevel !== undefined) {
@@ -776,6 +800,26 @@ class SearchUI {
             }
 
             return true;
+        });
+
+        // Сортировка по цене, если включена
+        if (this.filters.sortByPrice) {
+            filteredResults = this.sortByPrice(filteredResults);
+        }
+
+        return filteredResults;
+    }
+
+    /**
+     * Сортирует результаты по цене (от дешевых к дорогим)
+     * @param {Array} results - Результаты для сортировки
+     * @returns {Array} Отсортированные результаты
+     */
+    sortByPrice(results) {
+        return results.sort((itemA, itemB) => {
+            const priceA = this.convertPriceToGP(itemA.system?.price?.value || {});
+            const priceB = this.convertPriceToGP(itemB.system?.price?.value || {});
+            return priceA - priceB;
         });
     }
 
@@ -802,6 +846,7 @@ class SearchUI {
     clearAllFilters() {
         this.filters.maxLevel = 20;
         this.filters.maxPrice = 100; // 100 GP
+        this.filters.sortByPrice = false;
         
         // Сбрасываем input максимального уровня
         if (this.maxLevelInput) {
@@ -811,6 +856,11 @@ class SearchUI {
         // Сбрасываем input максимальной цены
         if (this.maxPriceInput) {
             this.maxPriceInput.value = '100';
+        }
+        
+        // Сбрасываем кнопку сортировки
+        if (this.sortByPrice) {
+            this.sortByPrice.textContent = '💰 Сортировать по цене';
         }
         
         // Обновляем конвертер

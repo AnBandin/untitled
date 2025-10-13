@@ -617,6 +617,28 @@ button span {
 .filter-actions {
     text-align: center;
     margin-top: var(--spacing-md);
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.sort-btn {
+    background: var(--secondary-color);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all var(--transition);
+    font-weight: 500;
+}
+
+.sort-btn:hover {
+    background: #2980b9;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(52, 152, 219, 0.3);
 }
 
 .clear-filters-btn {
