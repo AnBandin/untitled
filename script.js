@@ -667,7 +667,7 @@ class SearchUI {
         return `
             <div class="item-block">
                 <div class="item-name-level">
-                    ${item.nameRus ? `<div class="item-name-rus">${highlightedNameRus}</div>` : ''}
+                    ${item.nameRus ? `<div class="item-name">${highlightedNameRus}</div>` : ''}
                     <div class="item-level">Уровень: ${level}</div>
                 </div>
                 <div class="item-id-price">
