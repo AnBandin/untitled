@@ -1,5 +1,5 @@
 // Импортируем данные предметов из отдельного файла
-import items from './items.js';
+import items from './newItems.js';
 
 
 /**
@@ -113,6 +113,7 @@ class ItemSearch {
         this.items = items;
         this.searchStrategies = [
             this.searchByName.bind(this),
+            this.searchByNameRus.bind(this),
             this.searchByDescription.bind(this),
             this.searchByKey.bind(this)
         ];
@@ -215,10 +216,15 @@ class ItemSearch {
      * @returns {Array} Результаты поиска
      */
     performSearch(normalizedQuery) {
-        const items = Object.entries(this.items);
-        const matchingItems = items.filter(([key, item]) => {
+        const items = Array.isArray(this.items) ? this.items : Object.entries(this.items);
+        const matchingItems = items.filter((item) => {
+            // Если items - массив, item уже является объектом
+            // Если items - объект, item это [key, value]
+            const itemData = Array.isArray(this.items) ? item : item[1];
+            const itemKey = Array.isArray(this.items) ? item._id : item[0];
+            
             return this.searchStrategies.some(strategy => 
-                strategy(item, key, normalizedQuery)
+                strategy(itemData, itemKey, normalizedQuery)
             );
         });
 
@@ -234,9 +240,16 @@ class ItemSearch {
      * @returns {Array} Отранжированные результаты
      */
     rankResults(items, query) {
-        return items.sort(([keyA, itemA], [keyB, itemB]) => {
-            const scoreA = this.calculateRelevanceScore(itemA, keyA, query);
-            const scoreB = this.calculateRelevanceScore(itemB, keyB, query);
+        return items.sort((itemA, itemB) => {
+            // Если items - массив, item уже является объектом
+            // Если items - объект, item это [key, value]
+            const itemDataA = Array.isArray(this.items) ? itemA : itemA[1];
+            const itemKeyA = Array.isArray(this.items) ? itemA._id : itemA[0];
+            const itemDataB = Array.isArray(this.items) ? itemB : itemB[1];
+            const itemKeyB = Array.isArray(this.items) ? itemB._id : itemB[0];
+            
+            const scoreA = this.calculateRelevanceScore(itemDataA, itemKeyA, query);
+            const scoreB = this.calculateRelevanceScore(itemDataB, itemKeyB, query);
             return scoreB - scoreA; // Сортируем по убыванию релевантности
         });
     }
@@ -289,6 +302,7 @@ class ItemSearch {
         // Формируем единый текст для подсчётов
         const combinedText = [
             (item.name || ''),
+            (item.nameRus || ''),
             key,
             (item.description || '')
         ].join(' ').toLowerCase();
@@ -330,6 +344,13 @@ class ItemSearch {
      */
     searchByName(item, key, query) {
         return item.name && this.fuzzySearch(item.name, query);
+    }
+
+    /**
+     * Поиск по русскому названию предмета
+     */
+    searchByNameRus(item, key, query) {
+        return item.nameRus && this.fuzzySearch(item.nameRus, query);
     }
 
     /**
@@ -387,11 +408,17 @@ class ItemSearch {
      * @returns {Array} Результаты поиска
      */
     mapToSearchResults(matchingItems) {
-        return matchingItems.map(([key, item]) => ({
-            key,
-            name: item.name || '',
-            description: item.description || ''
-        }));
+        return matchingItems.map((item) => {
+            // Если items - массив, item уже является объектом
+            // Если items - объект, item это [key, value]
+            const itemData = Array.isArray(this.items) ? item : item[1];
+            const itemKey = Array.isArray(this.items) ? item._id : item[0];
+            
+            return {
+                ...itemData,
+                key: itemKey
+            };
+        });
     }
 }
 
@@ -555,6 +582,26 @@ class SearchUI {
     }
 
     /**
+     * Форматирует цену предмета
+     * @param {Object} priceValue - Объект с ценой
+     * @returns {string} Отформатированная цена
+     */
+    formatPrice(priceValue) {
+        if (!priceValue || Object.keys(priceValue).length === 0) {
+            return '—';
+        }
+        
+        const priceParts = [];
+        for (const [currency, amount] of Object.entries(priceValue)) {
+            if (amount > 0) {
+                priceParts.push(`${amount} ${currency.toUpperCase()}`);
+            }
+        }
+        
+        return priceParts.length > 0 ? priceParts.join(', ') : '—';
+    }
+
+    /**
      * Создает HTML для одного предмета
      * @param {Object} item - Данные предмета
      * @param {string} query - Поисковый запрос
@@ -563,17 +610,29 @@ class SearchUI {
     createItemHTML(item, query) {
         const cleanDescription = TextUtils.cleanText(item.description);
         const highlightedName = TextUtils.highlightMatches(item.name, query, CSS_CLASSES.HIGHLIGHT_NAME);
+        const highlightedNameRus = TextUtils.highlightMatches(item.nameRus || '', query, CSS_CLASSES.HIGHLIGHT_NAME);
         const highlightedDescription = TextUtils.highlightMatches(cleanDescription, query, CSS_CLASSES.HIGHLIGHT_DESCRIPTION);
         
-        const aonUrl = `https://2e.aonprd.com/Search.aspx?q=${encodeURIComponent(item.key)}`;
-        const highlightedKey = TextUtils.highlightMatches(item.key, query, CSS_CLASSES.HIGHLIGHT);
-        const clickableId = `<a href="${aonUrl}" target="_blank" title="Открыть в Archives of Nethys">${highlightedKey}</a>`;
+        const aonUrl = `https://2e.aonprd.com/Search.aspx?q=${encodeURIComponent(item._id)}`;
+        const highlightedId = TextUtils.highlightMatches(item._id, query, CSS_CLASSES.HIGHLIGHT);
+        const clickableId = `<a href="${aonUrl}" target="_blank" title="Открыть в Archives of Nethys">${highlightedId}</a>`;
         
+        // Форматируем цену
+        const priceValue = item.system?.price?.value;
+        const priceText = priceValue ? this.formatPrice(priceValue) : '—';
+        
+        // Получаем уровень
+        const level = item.system?.level?.value || '—';
         
         return `
             <div class="item-block">
-                <div class="item-name">${highlightedName}</div>
+                <div class="item-header">
+                    <div class="item-name">${highlightedName}</div>
+                    <div class="item-level">Уровень: ${level}</div>
+                </div>
+                ${item.nameRus ? `<div class="item-name-rus">${highlightedNameRus}</div>` : ''}
                 <div class="item-id">ID: ${clickableId}</div>
+                <div class="item-price">Цена: ${priceText}</div>
                 <div class="item-description">${highlightedDescription}</div>
             </div>
         `;
