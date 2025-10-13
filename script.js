@@ -24,6 +24,10 @@ const DOM_SELECTORS = {
     LEVEL_FILTER: '#levelFilter',
     PRICE_RANGE: '#priceRange',
     PRICE_VALUE: '#priceValue',
+    PP_INPUT: '#ppInput',
+    GP_INPUT: '#gpInput',
+    SP_INPUT: '#spInput',
+    CP_INPUT: '#cpInput',
     CLEAR_FILTERS: '#clearFilters'
 };
 
@@ -479,6 +483,10 @@ class SearchUI {
         this.levelFilter = document.querySelector(DOM_SELECTORS.LEVEL_FILTER);
         this.priceRange = document.querySelector(DOM_SELECTORS.PRICE_RANGE);
         this.priceValue = document.querySelector(DOM_SELECTORS.PRICE_VALUE);
+        this.ppInput = document.querySelector(DOM_SELECTORS.PP_INPUT);
+        this.gpInput = document.querySelector(DOM_SELECTORS.GP_INPUT);
+        this.spInput = document.querySelector(DOM_SELECTORS.SP_INPUT);
+        this.cpInput = document.querySelector(DOM_SELECTORS.CP_INPUT);
         this.clearFilters = document.querySelector(DOM_SELECTORS.CLEAR_FILTERS);
         
         if (!this.input || !this.button || !this.resultDiv) {
@@ -487,7 +495,12 @@ class SearchUI {
         
         this.filters = {
             level: '',
-            maxPrice: 10000
+            maxPrice: {
+                pp: 1000,
+                gp: 10000,
+                sp: 100000,
+                cp: 1000000
+            }
         };
         
         this.init();
@@ -529,10 +542,50 @@ class SearchUI {
         // Обработка ползунка цены
         if (this.priceRange) {
             this.priceRange.addEventListener('input', () => {
-                this.filters.maxPrice = parseInt(this.priceRange.value);
+                const gpValue = parseInt(this.priceRange.value);
+                this.filters.maxPrice.gp = gpValue;
                 if (this.priceValue) {
-                    this.priceValue.textContent = this.filters.maxPrice;
+                    this.priceValue.textContent = gpValue;
                 }
+                if (this.gpInput) {
+                    this.gpInput.value = gpValue;
+                }
+                this.performSearch();
+            });
+        }
+
+        // Обработка ввода цены вручную
+        if (this.ppInput) {
+            this.ppInput.addEventListener('input', () => {
+                this.filters.maxPrice.pp = parseInt(this.ppInput.value) || 0;
+                this.performSearch();
+            });
+        }
+
+        if (this.gpInput) {
+            this.gpInput.addEventListener('input', () => {
+                const gpValue = parseInt(this.gpInput.value) || 0;
+                this.filters.maxPrice.gp = gpValue;
+                if (this.priceRange) {
+                    this.priceRange.value = gpValue;
+                }
+                if (this.priceValue) {
+                    this.priceValue.textContent = gpValue;
+                }
+                this.performSearch();
+            });
+        }
+
+        if (this.spInput) {
+            this.spInput.addEventListener('input', () => {
+                this.filters.maxPrice.sp = parseInt(this.spInput.value) || 0;
+                this.performSearch();
+            });
+        }
+
+        if (this.cpInput) {
+            this.cpInput.addEventListener('input', () => {
+                this.filters.maxPrice.cp = parseInt(this.cpInput.value) || 0;
                 this.performSearch();
             });
         }
@@ -728,10 +781,11 @@ class SearchUI {
             }
 
             // Фильтр по цене
-            if (this.filters.maxPrice < 10000) {
-                const priceValue = item.system?.price?.value;
-                if (priceValue && priceValue.gp) {
-                    if (priceValue.gp > this.filters.maxPrice) {
+            const priceValue = item.system?.price?.value;
+            if (priceValue) {
+                // Проверяем каждый тип монет
+                for (const [currency, maxAmount] of Object.entries(this.filters.maxPrice)) {
+                    if (priceValue[currency] && priceValue[currency] > maxAmount) {
                         return false;
                     }
                 }
@@ -746,7 +800,12 @@ class SearchUI {
      */
     clearAllFilters() {
         this.filters.level = '';
-        this.filters.maxPrice = 10000;
+        this.filters.maxPrice = {
+            pp: 1000,
+            gp: 10000,
+            sp: 100000,
+            cp: 1000000
+        };
         
         if (this.levelFilter) {
             this.levelFilter.value = '';
@@ -758,6 +817,22 @@ class SearchUI {
         
         if (this.priceValue) {
             this.priceValue.textContent = '10000';
+        }
+
+        if (this.ppInput) {
+            this.ppInput.value = '1000';
+        }
+
+        if (this.gpInput) {
+            this.gpInput.value = '10000';
+        }
+
+        if (this.spInput) {
+            this.spInput.value = '100000';
+        }
+
+        if (this.cpInput) {
+            this.cpInput.value = '1000000';
         }
         
         // Перезапускаем поиск

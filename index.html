@@ -69,19 +69,39 @@
                     </div>
                     
                     <div class="filter-group">
-                        <label for="priceRange">Максимальная цена (GP)</label>
-                        <div class="price-range-container">
-                            <input 
-                                type="range" 
-                                id="priceRange" 
-                                min="0" 
-                                max="10000" 
-                                step="50" 
-                                value="10000"
-                                class="price-slider"
-                            >
-                            <div class="price-display">
-                                <span id="priceValue">10000</span> GP
+                        <label for="priceRange">Максимальная цена</label>
+                        <div class="price-input-container">
+                            <div class="price-inputs">
+                                <div class="price-input-group">
+                                    <label for="ppInput">PP</label>
+                                    <input type="number" id="ppInput" min="0" max="1000" step="1" value="1000" class="price-input">
+                                </div>
+                                <div class="price-input-group">
+                                    <label for="gpInput">GP</label>
+                                    <input type="number" id="gpInput" min="0" max="10000" step="1" value="10000" class="price-input">
+                                </div>
+                                <div class="price-input-group">
+                                    <label for="spInput">SP</label>
+                                    <input type="number" id="spInput" min="0" max="100000" step="1" value="100000" class="price-input">
+                                </div>
+                                <div class="price-input-group">
+                                    <label for="cpInput">CP</label>
+                                    <input type="number" id="cpInput" min="0" max="1000000" step="1" value="1000000" class="price-input">
+                                </div>
+                            </div>
+                            <div class="price-range-container">
+                                <input 
+                                    type="range" 
+                                    id="priceRange" 
+                                    min="0" 
+                                    max="10000" 
+                                    step="50" 
+                                    value="10000"
+                                    class="price-slider"
+                                >
+                                <div class="price-display">
+                                    <span id="priceValue">10000</span> GP
+                                </div>
                             </div>
                         </div>
                     </div>

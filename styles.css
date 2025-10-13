@@ -181,11 +181,12 @@ button:active {
 }
 
 .item-id {
-    font-size: 10px;
-    color: #7f8c8d;
-    background: #ecf0f1;
-    padding: 2px 6px;
-    border-radius: 8px;
+    font-size: 12px;
+    color: #2c3e50;
+    font-weight: 600;
+    background: #e3f2fd;
+    padding: 4px 8px;
+    border-radius: 3px;
     display: inline-block;
     margin: 0;
     flex: 1;
@@ -194,21 +195,23 @@ button:active {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    border: 1px solid #bbdefb;
 }
 
 .item-id a {
     color: #2c3e50;
     text-decoration: none;
-    font-weight: 500;
-    font-size: 10px;
+    font-weight: 600;
+    font-size: 12px;
     transition: all 0.3s ease;
 }
 
 /* Hover эффект для всего блока item-id */
 .item-id:hover {
-    background: #3498db !important;
+    background: #2196f3 !important;
     color: white !important;
-    transform: scale(1.02);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
     transition: all 0.3s ease;
 }
 
@@ -220,10 +223,10 @@ button:active {
 .item-id a .highlight {
     background-color: #ffeb3b !important;
     color: #333 !important;
-    padding: 1px 2px;
+    padding: 1px 3px;
     border-radius: 2px;
     font-weight: bold;
-    font-size: 10px;
+    font-size: 12px;
 }
 
 .item-id:hover a .highlight {
@@ -520,6 +523,49 @@ button span {
     box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
 }
 
+.price-input-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.price-inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: var(--spacing-sm);
+}
+
+.price-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.price-input-group label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-light);
+    text-align: center;
+    margin-bottom: 0;
+}
+
+.price-input {
+    width: 100%;
+    padding: 6px 8px;
+    border: 2px solid var(--border-light);
+    border-radius: var(--border-radius);
+    font-size: 12px;
+    text-align: center;
+    background-color: var(--surface);
+    transition: all var(--transition);
+}
+
+.price-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+}
+
 .price-range-container {
     display: flex;
     flex-direction: column;
@@ -628,7 +674,8 @@ button span {
         flex: none;
         width: 100%;
         max-width: 100%;
-        font-size: 9px;
+        font-size: 11px;
+        padding: 3px 6px;
     }
     
     .item-price {
@@ -642,6 +689,16 @@ button span {
     
     .filter-group {
         margin-bottom: var(--spacing-sm);
+    }
+    
+    .price-inputs {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-xs);
+    }
+    
+    .price-input {
+        font-size: 11px;
+        padding: 4px 6px;
     }
 }
 
