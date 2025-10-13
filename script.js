@@ -21,13 +21,8 @@ const DOM_SELECTORS = {
     INPUT: '#userInput',
     BUTTON: '#searchButton',
     RESULT: '#result',
-    LEVEL_CHECKBOXES: '.level-checkbox-group input[type="checkbox"]',
-    PRICE_RANGE: '#priceRange',
-    PRICE_VALUE: '#priceValue',
-    PP_INPUT: '#ppInput',
-    GP_INPUT: '#gpInput',
-    SP_INPUT: '#spInput',
-    CP_INPUT: '#cpInput',
+    LEVEL_SELECT: '#levelSelect',
+    MAX_PRICE_SELECT: '#maxPriceSelect',
     CLEAR_FILTERS: '#clearFilters'
 };
 
@@ -480,13 +475,8 @@ class SearchUI {
         this.input = document.querySelector(DOM_SELECTORS.INPUT);
         this.button = document.querySelector(DOM_SELECTORS.BUTTON);
         this.resultDiv = document.querySelector(DOM_SELECTORS.RESULT);
-        this.levelCheckboxes = document.querySelectorAll(DOM_SELECTORS.LEVEL_CHECKBOXES);
-        this.priceRange = document.querySelector(DOM_SELECTORS.PRICE_RANGE);
-        this.priceValue = document.querySelector(DOM_SELECTORS.PRICE_VALUE);
-        this.ppInput = document.querySelector(DOM_SELECTORS.PP_INPUT);
-        this.gpInput = document.querySelector(DOM_SELECTORS.GP_INPUT);
-        this.spInput = document.querySelector(DOM_SELECTORS.SP_INPUT);
-        this.cpInput = document.querySelector(DOM_SELECTORS.CP_INPUT);
+        this.levelSelect = document.querySelector(DOM_SELECTORS.LEVEL_SELECT);
+        this.maxPriceSelect = document.querySelector(DOM_SELECTORS.MAX_PRICE_SELECT);
         this.clearFilters = document.querySelector(DOM_SELECTORS.CLEAR_FILTERS);
         
         if (!this.input || !this.button || !this.resultDiv) {
@@ -495,12 +485,7 @@ class SearchUI {
         
         this.filters = {
             levels: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
-            maxPrice: {
-                pp: 100,
-                gp: 1000,
-                sp: 10000,
-                cp: 100000
-            }
+            maxPrice: 1000 // в CP
         };
         
         this.init();
@@ -531,61 +516,18 @@ class SearchUI {
             this.performSearch();
         });
 
-        // Обработка чекбоксов уровней
-        this.levelCheckboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', () => {
+        // Обработка select уровней
+        if (this.levelSelect) {
+            this.levelSelect.addEventListener('change', () => {
                 this.updateLevelFilters();
                 this.performSearch();
             });
-        });
-
-        // Обработка ползунка цены
-        if (this.priceRange) {
-            this.priceRange.addEventListener('input', () => {
-                const gpValue = parseInt(this.priceRange.value);
-                this.filters.maxPrice.gp = gpValue;
-                if (this.priceValue) {
-                    this.priceValue.textContent = gpValue;
-                }
-                if (this.gpInput) {
-                    this.gpInput.value = gpValue;
-                }
-                this.performSearch();
-            });
         }
 
-        // Обработка ввода цены вручную
-        if (this.ppInput) {
-            this.ppInput.addEventListener('input', () => {
-                this.filters.maxPrice.pp = parseInt(this.ppInput.value) || 0;
-                this.performSearch();
-            });
-        }
-
-        if (this.gpInput) {
-            this.gpInput.addEventListener('input', () => {
-                const gpValue = parseInt(this.gpInput.value) || 0;
-                this.filters.maxPrice.gp = gpValue;
-                if (this.priceRange) {
-                    this.priceRange.value = gpValue;
-                }
-                if (this.priceValue) {
-                    this.priceValue.textContent = gpValue;
-                }
-                this.performSearch();
-            });
-        }
-
-        if (this.spInput) {
-            this.spInput.addEventListener('input', () => {
-                this.filters.maxPrice.sp = parseInt(this.spInput.value) || 0;
-                this.performSearch();
-            });
-        }
-
-        if (this.cpInput) {
-            this.cpInput.addEventListener('input', () => {
-                this.filters.maxPrice.cp = parseInt(this.cpInput.value) || 0;
+        // Обработка select максимальной цены
+        if (this.maxPriceSelect) {
+            this.maxPriceSelect.addEventListener('change', () => {
+                this.updatePriceFilter();
                 this.performSearch();
             });
         }
@@ -766,15 +708,23 @@ class SearchUI {
     }
 
     /**
-     * Обновляет фильтры уровней на основе чекбоксов
+     * Обновляет фильтры уровней на основе select
      */
     updateLevelFilters() {
         this.filters.levels = [];
-        this.levelCheckboxes.forEach(checkbox => {
-            if (checkbox.checked) {
-                this.filters.levels.push(parseInt(checkbox.value));
-            }
-        });
+        if (this.levelSelect) {
+            const selectedOptions = Array.from(this.levelSelect.selectedOptions);
+            this.filters.levels = selectedOptions.map(option => parseInt(option.value));
+        }
+    }
+
+    /**
+     * Обновляет фильтр максимальной цены
+     */
+    updatePriceFilter() {
+        if (this.maxPriceSelect) {
+            this.filters.maxPrice = parseInt(this.maxPriceSelect.value);
+        }
     }
 
     /**
@@ -795,11 +745,9 @@ class SearchUI {
             // Фильтр по цене
             const priceValue = item.system?.price?.value;
             if (priceValue) {
-                // Проверяем каждый тип монет
-                for (const [currency, maxAmount] of Object.entries(this.filters.maxPrice)) {
-                    if (priceValue[currency] && priceValue[currency] > maxAmount) {
-                        return false;
-                    }
+                const itemPriceInCP = this.convertPriceToCP(priceValue);
+                if (itemPriceInCP > this.filters.maxPrice) {
+                    return false;
                 }
             }
 
@@ -808,44 +756,39 @@ class SearchUI {
     }
 
     /**
+     * Конвертирует цену предмета в CP (медные монеты)
+     * @param {Object} priceValue - Объект с ценой предмета
+     * @returns {number} Цена в CP
+     */
+    convertPriceToCP(priceValue) {
+        let totalCP = 0;
+        
+        // Конвертируем все валюты в CP
+        if (priceValue.pp) totalCP += priceValue.pp * 10000; // 1 PP = 10000 CP
+        if (priceValue.gp) totalCP += priceValue.gp * 1000;  // 1 GP = 1000 CP  
+        if (priceValue.sp) totalCP += priceValue.sp * 100;  // 1 SP = 100 CP
+        if (priceValue.cp) totalCP += priceValue.cp;        // 1 CP = 1 CP
+        
+        return totalCP;
+    }
+
+    /**
      * Очищает все фильтры
      */
     clearAllFilters() {
         this.filters.levels = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20];
-        this.filters.maxPrice = {
-            pp: 100,
-            gp: 1000,
-            sp: 10000,
-            cp: 100000
-        };
+        this.filters.maxPrice = 1000; // 1 GP в CP
         
-        // Сбрасываем все чекбоксы уровней
-        this.levelCheckboxes.forEach(checkbox => {
-            checkbox.checked = true;
-        });
-        
-        if (this.priceRange) {
-            this.priceRange.value = '1000';
+        // Сбрасываем select уровней - выбираем все опции
+        if (this.levelSelect) {
+            Array.from(this.levelSelect.options).forEach(option => {
+                option.selected = true;
+            });
         }
         
-        if (this.priceValue) {
-            this.priceValue.textContent = '1000';
-        }
-
-        if (this.ppInput) {
-            this.ppInput.value = '100';
-        }
-
-        if (this.gpInput) {
-            this.gpInput.value = '1000';
-        }
-
-        if (this.spInput) {
-            this.spInput.value = '10000';
-        }
-
-        if (this.cpInput) {
-            this.cpInput.value = '100000';
+        // Сбрасываем select максимальной цены
+        if (this.maxPriceSelect) {
+            this.maxPriceSelect.value = '1000';
         }
         
         // Перезапускаем поиск

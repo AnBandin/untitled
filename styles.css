@@ -523,149 +523,49 @@ button span {
     box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
 }
 
-/* ===== ЧЕКБОКСЫ УРОВНЕЙ ===== */
-.level-checkboxes {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
-    gap: var(--spacing-xs);
-    margin-top: var(--spacing-xs);
-}
-
-.level-checkbox-group {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-}
-
-.level-checkbox-group input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    margin: 0;
+/* ===== SELECT ЭЛЕМЕНТЫ ===== */
+.filter-select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid var(--border-light);
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    background-color: var(--surface);
+    transition: all var(--transition);
     cursor: pointer;
-    accent-color: var(--primary-color);
 }
 
-.level-checkbox-group label {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--text-light);
-    cursor: pointer;
-    text-align: center;
-    margin: 0;
-    padding: 2px 4px;
+.filter-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.filter-select[multiple] {
+    min-height: 120px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.filter-select[multiple] option {
+    padding: 8px 12px;
+    margin: 2px 0;
     border-radius: 3px;
     transition: all var(--transition);
-    min-width: 20px;
 }
 
-.level-checkbox-group input[type="checkbox"]:checked + label {
-    background-color: var(--primary-color);
-    color: white;
-}
-
-.level-checkbox-group label:hover {
+.filter-select[multiple] option:hover {
     background-color: var(--border-light);
 }
 
-.price-input-container {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
-}
-
-.price-inputs {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: var(--spacing-sm);
-}
-
-.price-input-group {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
-}
-
-.price-input-group label {
-    font-size: 0.8rem;
+.filter-select[multiple] option:checked {
+    background-color: var(--primary-color);
+    color: white;
     font-weight: 600;
-    color: var(--text-light);
-    text-align: center;
-    margin-bottom: 0;
 }
 
-.price-input {
-    width: 100%;
-    padding: 6px 8px;
-    border: 2px solid var(--border-light);
-    border-radius: var(--border-radius);
-    font-size: 12px;
-    text-align: center;
-    background-color: var(--surface);
-    transition: all var(--transition);
-}
-
-.price-input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
-}
-
-.price-range-container {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
-}
-
-.price-slider {
-    width: 100%;
-    height: 6px;
-    border-radius: 3px;
-    background: var(--border-light);
-    outline: none;
-    -webkit-appearance: none;
-    appearance: none;
-}
-
-.price-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: var(--primary-color);
-    cursor: pointer;
-    box-shadow: 0 2px 4px var(--shadow);
-    transition: all var(--transition);
-}
-
-.price-slider::-webkit-slider-thumb:hover {
-    background: var(--primary-hover);
-    transform: scale(1.1);
-}
-
-.price-slider::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: var(--primary-color);
-    cursor: pointer;
-    border: none;
-    box-shadow: 0 2px 4px var(--shadow);
-    transition: all var(--transition);
-}
-
-.price-slider::-moz-range-thumb:hover {
-    background: var(--primary-hover);
-    transform: scale(1.1);
-}
-
-.price-display {
-    text-align: center;
-    font-weight: 600;
-    color: var(--text-color);
-    font-size: 14px;
-}
+/* ===== СТИЛИ ДЛЯ НОВОЙ СИСТЕМЫ ЦЕН ===== */
+/* Удалены старые стили для системы цен, так как теперь используется простой select */
 
 .filter-actions {
     text-align: center;
@@ -736,25 +636,14 @@ button span {
         margin-bottom: var(--spacing-sm);
     }
     
-    .price-inputs {
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--spacing-xs);
+    .filter-select[multiple] {
+        min-height: 100px;
+        max-height: 150px;
     }
     
-    .price-input {
-        font-size: 11px;
-        padding: 4px 6px;
-    }
-    
-    .level-checkboxes {
-        grid-template-columns: repeat(5, 1fr);
-        gap: 4px;
-    }
-    
-    .level-checkbox-group label {
-        font-size: 0.7rem;
-        padding: 1px 2px;
-        min-width: 16px;
+    .filter-select[multiple] option {
+        padding: 6px 8px;
+        font-size: 0.9rem;
     }
 }
 
