@@ -196,13 +196,18 @@ button:active {
     text-overflow: ellipsis;
     white-space: nowrap;
     border: 1px solid #bbdefb;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
-.item-id a {
+.item-id-link {
     color: #2c3e50;
     text-decoration: none;
     font-weight: 600;
     font-size: 12px;
+    display: block;
+    width: 100%;
+    height: 100%;
     transition: all 0.3s ease;
 }
 
@@ -215,12 +220,12 @@ button:active {
     transition: all 0.3s ease;
 }
 
-.item-id:hover a {
+.item-id:hover .item-id-link {
     color: white !important;
 }
 
 /* Стили для подсветки внутри ссылок */
-.item-id a .highlight {
+.item-id-link .highlight {
     background-color: #ffeb3b !important;
     color: #333 !important;
     padding: 1px 3px;
@@ -229,7 +234,7 @@ button:active {
     font-size: 12px;
 }
 
-.item-id:hover a .highlight {
+.item-id:hover .item-id-link .highlight {
     background-color: #fff !important;
     color: #333 !important;
 }

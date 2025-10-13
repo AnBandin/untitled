@@ -658,7 +658,7 @@ class SearchUI {
         
         const aonUrl = `https://2e.aonprd.com/Search.aspx?q=${encodeURIComponent(item.name)}`;
         const highlightedId = TextUtils.highlightMatches(item.name, query, CSS_CLASSES.HIGHLIGHT);
-        const clickableId = `<a href="${aonUrl}" target="_blank" title="Открыть в Archives of Nethys">${highlightedId}</a>`;
+        const clickableId = `<a href="${aonUrl}" target="_blank" title="Открыть в Archives of Nethys" class="item-id-link">${highlightedId}</a>`;
         
         // Форматируем цену
         const priceValue = item.system?.price?.value;
@@ -671,10 +671,10 @@ class SearchUI {
             <div class="item-block">
                 <div class="item-name-level">
                     ${item.nameRus ? `<div class="item-name">${highlightedNameRus}</div>` : ''}
-                    <div class="item-level">Уровень: ${level}</div>
+                    <div class="item-id">ID: ${clickableId}</div>
                 </div>
                 <div class="item-id-price">
-                    <div class="item-id">ID: ${clickableId}</div>
+                    <div class="item-level">Уровень: ${level}</div>
                     <div class="item-price">Цена: ${priceText}</div>
                 </div>
                 <div class="item-description">${highlightedDescription}</div>
