@@ -494,7 +494,8 @@ class SearchUI {
         this.filters = {
             maxLevel: 20,
             maxPrice: 100, // в GP
-            sortByPrice: false
+            sortByPrice: false,
+            sortDirection: 'asc' // 'asc' для возрастания, 'desc' для убывания
         };
         
         this.init();
@@ -765,12 +766,27 @@ class SearchUI {
      * Переключает сортировку по цене
      */
     togglePriceSort() {
-        this.filters.sortByPrice = !this.filters.sortByPrice;
+        if (!this.filters.sortByPrice) {
+            // Включаем сортировку по возрастанию
+            this.filters.sortByPrice = true;
+            this.filters.sortDirection = 'asc';
+        } else if (this.filters.sortDirection === 'asc') {
+            // Переключаем на убывание
+            this.filters.sortDirection = 'desc';
+        } else {
+            // Выключаем сортировку
+            this.filters.sortByPrice = false;
+        }
         
         // Обновляем текст кнопки
         if (this.sortByPrice) {
-            this.sortByPrice.textContent = this.filters.sortByPrice ? 
-                '💰 Сортировка по цене: ВКЛ' : '💰 Сортировать по цене';
+            if (!this.filters.sortByPrice) {
+                this.sortByPrice.textContent = '💰 Сортировать по цене';
+            } else if (this.filters.sortDirection === 'asc') {
+                this.sortByPrice.textContent = '💰 Цена: ↑ (дешевые)';
+            } else {
+                this.sortByPrice.textContent = '💰 Цена: ↓ (дорогие)';
+            }
         }
     }
 
@@ -804,22 +820,27 @@ class SearchUI {
 
         // Сортировка по цене, если включена
         if (this.filters.sortByPrice) {
-            filteredResults = this.sortByPrice(filteredResults);
+            filteredResults = this.sortResultsByPrice(filteredResults);
         }
 
         return filteredResults;
     }
 
     /**
-     * Сортирует результаты по цене (от дешевых к дорогим)
+     * Сортирует результаты по цене
      * @param {Array} results - Результаты для сортировки
      * @returns {Array} Отсортированные результаты
      */
-    sortByPrice(results) {
+    sortResultsByPrice(results) {
         return results.sort((itemA, itemB) => {
             const priceA = this.convertPriceToGP(itemA.system?.price?.value || {});
             const priceB = this.convertPriceToGP(itemB.system?.price?.value || {});
-            return priceA - priceB;
+            
+            if (this.filters.sortDirection === 'asc') {
+                return priceA - priceB; // От дешевых к дорогим
+            } else {
+                return priceB - priceA; // От дорогих к дешевым
+            }
         });
     }
 
@@ -847,6 +868,7 @@ class SearchUI {
         this.filters.maxLevel = 20;
         this.filters.maxPrice = 100; // 100 GP
         this.filters.sortByPrice = false;
+        this.filters.sortDirection = 'asc';
         
         // Сбрасываем input максимального уровня
         if (this.maxLevelInput) {
