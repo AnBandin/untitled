@@ -21,7 +21,7 @@ const DOM_SELECTORS = {
     INPUT: '#userInput',
     BUTTON: '#searchButton',
     RESULT: '#result',
-    LEVEL_FILTER: '#levelFilter',
+    LEVEL_CHECKBOXES: '.level-checkbox-group input[type="checkbox"]',
     PRICE_RANGE: '#priceRange',
     PRICE_VALUE: '#priceValue',
     PP_INPUT: '#ppInput',
@@ -480,7 +480,7 @@ class SearchUI {
         this.input = document.querySelector(DOM_SELECTORS.INPUT);
         this.button = document.querySelector(DOM_SELECTORS.BUTTON);
         this.resultDiv = document.querySelector(DOM_SELECTORS.RESULT);
-        this.levelFilter = document.querySelector(DOM_SELECTORS.LEVEL_FILTER);
+        this.levelCheckboxes = document.querySelectorAll(DOM_SELECTORS.LEVEL_CHECKBOXES);
         this.priceRange = document.querySelector(DOM_SELECTORS.PRICE_RANGE);
         this.priceValue = document.querySelector(DOM_SELECTORS.PRICE_VALUE);
         this.ppInput = document.querySelector(DOM_SELECTORS.PP_INPUT);
@@ -494,12 +494,12 @@ class SearchUI {
         }
         
         this.filters = {
-            level: '',
+            levels: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
             maxPrice: {
-                pp: 1000,
-                gp: 10000,
-                sp: 100000,
-                cp: 1000000
+                pp: 100,
+                gp: 1000,
+                sp: 10000,
+                cp: 100000
             }
         };
         
@@ -531,13 +531,13 @@ class SearchUI {
             this.performSearch();
         });
 
-        // Обработка фильтра по уровню
-        if (this.levelFilter) {
-            this.levelFilter.addEventListener('change', () => {
-                this.filters.level = this.levelFilter.value;
+        // Обработка чекбоксов уровней
+        this.levelCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                this.updateLevelFilters();
                 this.performSearch();
             });
-        }
+        });
 
         // Обработка ползунка цены
         if (this.priceRange) {
@@ -766,6 +766,18 @@ class SearchUI {
     }
 
     /**
+     * Обновляет фильтры уровней на основе чекбоксов
+     */
+    updateLevelFilters() {
+        this.filters.levels = [];
+        this.levelCheckboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                this.filters.levels.push(parseInt(checkbox.value));
+            }
+        });
+    }
+
+    /**
      * Применяет фильтры к результатам поиска
      * @param {Array} results - Результаты поиска
      * @returns {Array} Отфильтрованные результаты
@@ -773,9 +785,9 @@ class SearchUI {
     applyFilters(results) {
         return results.filter(item => {
             // Фильтр по уровню
-            if (this.filters.level !== '') {
-                const itemLevel = item.system?.level?.value;
-                if (itemLevel !== parseInt(this.filters.level)) {
+            const itemLevel = item.system?.level?.value;
+            if (itemLevel !== null && itemLevel !== undefined) {
+                if (!this.filters.levels.includes(itemLevel)) {
                     return false;
                 }
             }
@@ -799,40 +811,41 @@ class SearchUI {
      * Очищает все фильтры
      */
     clearAllFilters() {
-        this.filters.level = '';
+        this.filters.levels = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20];
         this.filters.maxPrice = {
-            pp: 1000,
-            gp: 10000,
-            sp: 100000,
-            cp: 1000000
+            pp: 100,
+            gp: 1000,
+            sp: 10000,
+            cp: 100000
         };
         
-        if (this.levelFilter) {
-            this.levelFilter.value = '';
-        }
+        // Сбрасываем все чекбоксы уровней
+        this.levelCheckboxes.forEach(checkbox => {
+            checkbox.checked = true;
+        });
         
         if (this.priceRange) {
-            this.priceRange.value = '10000';
+            this.priceRange.value = '1000';
         }
         
         if (this.priceValue) {
-            this.priceValue.textContent = '10000';
+            this.priceValue.textContent = '1000';
         }
 
         if (this.ppInput) {
-            this.ppInput.value = '1000';
+            this.ppInput.value = '100';
         }
 
         if (this.gpInput) {
-            this.gpInput.value = '10000';
+            this.gpInput.value = '1000';
         }
 
         if (this.spInput) {
-            this.spInput.value = '100000';
+            this.spInput.value = '10000';
         }
 
         if (this.cpInput) {
-            this.cpInput.value = '1000000';
+            this.cpInput.value = '100000';
         }
         
         // Перезапускаем поиск

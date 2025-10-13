@@ -41,31 +41,93 @@
                 
                 <div class="filters-section">
                     <div class="filter-group">
-                        <label for="levelFilter">Уровень предмета</label>
-                        <select id="levelFilter" class="filter-select">
-                            <option value="">Все уровни</option>
-                            <option value="0">0 уровень</option>
-                            <option value="1">1 уровень</option>
-                            <option value="2">2 уровень</option>
-                            <option value="3">3 уровень</option>
-                            <option value="4">4 уровень</option>
-                            <option value="5">5 уровень</option>
-                            <option value="6">6 уровень</option>
-                            <option value="7">7 уровень</option>
-                            <option value="8">8 уровень</option>
-                            <option value="9">9 уровень</option>
-                            <option value="10">10 уровень</option>
-                            <option value="11">11 уровень</option>
-                            <option value="12">12 уровень</option>
-                            <option value="13">13 уровень</option>
-                            <option value="14">14 уровень</option>
-                            <option value="15">15 уровень</option>
-                            <option value="16">16 уровень</option>
-                            <option value="17">17 уровень</option>
-                            <option value="18">18 уровень</option>
-                            <option value="19">19 уровень</option>
-                            <option value="20">20 уровень</option>
-                        </select>
+                        <label>Уровень предмета</label>
+                        <div class="level-checkboxes">
+                            <div class="level-checkbox-group">
+                                <input type="checkbox" id="level0" value="0" checked>
+                                <label for="level0">0</label>
+                            </div>
+                            <div class="level-checkbox-group">
+                                <input type="checkbox" id="level1" value="1" checked>
+                                <label for="level1">1</label>
+                            </div>
+                            <div class="level-checkbox-group">
+                                <input type="checkbox" id="level2" value="2" checked>
+                                <label for="level2">2</label>
+                            </div>
+                            <div class="level-checkbox-group">
+                                <input type="checkbox" id="level3" value="3" checked>
+                                <label for="level3">3</label>
+                            </div>
+                            <div class="level-checkbox-group">
+                                <input type="checkbox" id="level4" value="4" checked>
+                                <label for="level4">4</label>
+                            </div>
+                            <div class="level-checkbox-group">
+                                <input type="checkbox" id="level5" value="5" checked>
+                                <label for="level5">5</label>
+                            </div>
+                            <div class="level-checkbox-group">
+                                <input type="checkbox" id="level6" value="6" checked>
+                                <label for="level6">6</label>
+                            </div>
+                            <div class="level-checkbox-group">
+                                <input type="checkbox" id="level7" value="7" checked>
+                                <label for="level7">7</label>
+                            </div>
+                            <div class="level-checkbox-group">
+                                <input type="checkbox" id="level8" value="8" checked>
+                                <label for="level8">8</label>
+                            </div>
+                            <div class="level-checkbox-group">
+                                <input type="checkbox" id="level9" value="9" checked>
+                                <label for="level9">9</label>
+                            </div>
+                            <div class="level-checkbox-group">
+                                <input type="checkbox" id="level10" value="10" checked>
+                                <label for="level10">10</label>
+                            </div>
+                            <div class="level-checkbox-group">
+                                <input type="checkbox" id="level11" value="11" checked>
+                                <label for="level11">11</label>
+                            </div>
+                            <div class="level-checkbox-group">
+                                <input type="checkbox" id="level12" value="12" checked>
+                                <label for="level12">12</label>
+                            </div>
+                            <div class="level-checkbox-group">
+                                <input type="checkbox" id="level13" value="13" checked>
+                                <label for="level13">13</label>
+                            </div>
+                            <div class="level-checkbox-group">
+                                <input type="checkbox" id="level14" value="14" checked>
+                                <label for="level14">14</label>
+                            </div>
+                            <div class="level-checkbox-group">
+                                <input type="checkbox" id="level15" value="15" checked>
+                                <label for="level15">15</label>
+                            </div>
+                            <div class="level-checkbox-group">
+                                <input type="checkbox" id="level16" value="16" checked>
+                                <label for="level16">16</label>
+                            </div>
+                            <div class="level-checkbox-group">
+                                <input type="checkbox" id="level17" value="17" checked>
+                                <label for="level17">17</label>
+                            </div>
+                            <div class="level-checkbox-group">
+                                <input type="checkbox" id="level18" value="18" checked>
+                                <label for="level18">18</label>
+                            </div>
+                            <div class="level-checkbox-group">
+                                <input type="checkbox" id="level19" value="19" checked>
+                                <label for="level19">19</label>
+                            </div>
+                            <div class="level-checkbox-group">
+                                <input type="checkbox" id="level20" value="20" checked>
+                                <label for="level20">20</label>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="filter-group">
@@ -74,19 +136,19 @@
                             <div class="price-inputs">
                                 <div class="price-input-group">
                                     <label for="ppInput">PP</label>
-                                    <input type="number" id="ppInput" min="0" max="1000" step="1" value="1000" class="price-input">
+                                    <input type="number" id="ppInput" min="0" max="100" step="1" value="100" class="price-input">
                                 </div>
                                 <div class="price-input-group">
                                     <label for="gpInput">GP</label>
-                                    <input type="number" id="gpInput" min="0" max="10000" step="1" value="10000" class="price-input">
+                                    <input type="number" id="gpInput" min="0" max="1000" step="1" value="1000" class="price-input">
                                 </div>
                                 <div class="price-input-group">
                                     <label for="spInput">SP</label>
-                                    <input type="number" id="spInput" min="0" max="100000" step="1" value="100000" class="price-input">
+                                    <input type="number" id="spInput" min="0" max="10000" step="1" value="10000" class="price-input">
                                 </div>
                                 <div class="price-input-group">
                                     <label for="cpInput">CP</label>
-                                    <input type="number" id="cpInput" min="0" max="1000000" step="1" value="1000000" class="price-input">
+                                    <input type="number" id="cpInput" min="0" max="100000" step="1" value="100000" class="price-input">
                                 </div>
                             </div>
                             <div class="price-range-container">
@@ -94,13 +156,13 @@
                                     type="range" 
                                     id="priceRange" 
                                     min="0" 
-                                    max="10000" 
-                                    step="50" 
-                                    value="10000"
+                                    max="1000" 
+                                    step="10" 
+                                    value="1000"
                                     class="price-slider"
                                 >
                                 <div class="price-display">
-                                    <span id="priceValue">10000</span> GP
+                                    <span id="priceValue">1000</span> GP
                                 </div>
                             </div>
                         </div>

@@ -523,6 +523,51 @@ button span {
     box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
 }
 
+/* ===== ЧЕКБОКСЫ УРОВНЕЙ ===== */
+.level-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-xs);
+}
+
+.level-checkbox-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.level-checkbox-group input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+}
+
+.level-checkbox-group label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-light);
+    cursor: pointer;
+    text-align: center;
+    margin: 0;
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition: all var(--transition);
+    min-width: 20px;
+}
+
+.level-checkbox-group input[type="checkbox"]:checked + label {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.level-checkbox-group label:hover {
+    background-color: var(--border-light);
+}
+
 .price-input-container {
     display: flex;
     flex-direction: column;
@@ -699,6 +744,17 @@ button span {
     .price-input {
         font-size: 11px;
         padding: 4px 6px;
+    }
+    
+    .level-checkboxes {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 4px;
+    }
+    
+    .level-checkbox-group label {
+        font-size: 0.7rem;
+        padding: 1px 2px;
+        min-width: 16px;
     }
 }
 
