@@ -626,21 +626,14 @@ class SearchUI {
         
         return `
             <div class="item-block">
-                <div class="item-name">${highlightedName}</div>
-
-                ${item.nameRus || level !== '—' ? `
-                    <div class="item-rus-level-info">
-                        ${item.nameRus ? `<span class="item-name-rus">${highlightedNameRus}</span>` : ''}
-                        ${item.nameRus && level !== '—' ? ' | ' : ''}
-                        ${level !== '—' ? `<span class="item-level">Уровень: ${level}</span>` : ''}
-                    </div>
-                ` : ''}
-
-                <div class="item-id-price-info">
+                <div class="item-name-level">
+                    ${item.nameRus ? `<div class="item-name-rus">${highlightedNameRus}</div>` : ''}
+                    <div class="item-level">Уровень: ${level}</div>
+                </div>
+                <div class="item-id-price">
                     <div class="item-id">ID: ${clickableId}</div>
                     <div class="item-price">Цена: ${priceText}</div>
                 </div>
-
                 <div class="item-description">${highlightedDescription}</div>
             </div>
         `;

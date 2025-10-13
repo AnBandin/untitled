@@ -143,13 +143,18 @@ button:active {
     box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
-.item-name {
-    font-size: 18px;
-    font-weight: bold;
-    color: #2c3e50;
-    margin-bottom: 8px;
+.item-name-level {
+    margin-bottom: 12px;
     border-bottom: 2px solid #3498db;
-    padding-bottom: 5px;
+    padding-bottom: 8px;
+}
+
+.item-name-rus {
+    font-size: 16px;
+    font-weight: 500;
+    color: #7f8c8d;
+    margin-bottom: 8px;
+    font-style: italic;
 }
 
 .item-level {
@@ -160,40 +165,31 @@ button:active {
     padding: 4px 8px;
     border-radius: 4px;
     border: 1px solid #dee2e6;
+    display: inline-block;
+    margin-top: 4px;
 }
 
-.item-rus-level-info {
+.item-id-price {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
-    padding-bottom: 5px;
-    border-bottom: 1px dashed #ccc;
-}
-
-.item-name-rus {
-    font-size: 16px;
-    font-weight: 500;
-    color: #7f8c8d;
-    margin: 0;
-    font-style: italic;
-}
-
-.item-id-price-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
+    padding: 8px 0;
+    border-bottom: 1px dashed #ddd;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .item-id {
     font-size: 12px;
     color: #7f8c8d;
     background: #ecf0f1;
-    padding: 3px 8px;
+    padding: 4px 8px;
     border-radius: 12px;
     display: inline-block;
     margin: 0;
+    flex: 1;
+    min-width: 0;
 }
 
 .item-id a {
@@ -239,6 +235,8 @@ button:active {
     display: inline-block;
     margin: 0;
     border: 1px solid #c3e6c3;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .item-description {
@@ -490,6 +488,22 @@ button span {
     
     h1 {
         font-size: 2rem;
+    }
+    
+    .item-id-price {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .item-id {
+        flex: none;
+        width: 100%;
+    }
+    
+    .item-price {
+        flex: none;
+        align-self: flex-end;
     }
 }
 
