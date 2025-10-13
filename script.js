@@ -285,49 +285,44 @@ class ItemSearch {
     calculateRelevanceScore(item, key, query) {
         let score = 0;
         const queryLower = query.toLowerCase();
-        const nameLower = (item.name || '').toLowerCase();
-        const keyLower = key.toLowerCase();
-        const descLower = (item.description || '').toLowerCase();
         
-        // Точное совпадение в названии - высший приоритет
-        if (nameLower === queryLower) {
-            score += 200;
+        // Формируем единый текст для подсчётов
+        const combinedText = [
+            (item.name || ''),
+            key,
+            (item.description || '')
+        ].join(' ').toLowerCase();
+        
+        // 1) Полные совпадения фразы - высший приоритет
+        const exactPhraseCount = this.countOccurrences(combinedText, queryLower);
+        if (exactPhraseCount > 0) {
+            score += exactPhraseCount * 1000;
         }
         
-        // Точное совпадение в ключе - очень высокий приоритет
-        if (keyLower === queryLower) {
-            score += 150;
-        }
+        // 2) Разбиваем запрос на слова и сортируем по длине
+        const queryWords = queryLower.split(/\s+/)
+            .filter(word => word.length > 1) // убираем однобуквенные
+            .sort((a, b) => b.length - a.length); // сортируем по убыванию длины
         
-        // Название начинается с запроса
-        if (nameLower.startsWith(queryLower)) {
-            score += 80;
-        }
-        
-        // Ключ начинается с запроса
-        if (keyLower.startsWith(queryLower)) {
-            score += 60;
-        }
-        
-        // Подсчет вхождений в названии
-        const nameMatches = this.countMatches(nameLower, queryLower);
-        if (nameMatches > 0) {
-            score += 50 + (nameMatches * 10); // Базовые 50 + 10 за каждое вхождение
-        }
-        
-        // Подсчет вхождений в ключе
-        const keyMatches = this.countMatches(keyLower, queryLower);
-        if (keyMatches > 0) {
-            score += 30 + (keyMatches * 5); // Базовые 30 + 5 за каждое вхождение
-        }
-        
-        // Подсчет вхождений в описании
-        const descMatches = this.countMatches(descLower, queryLower);
-        if (descMatches > 0) {
-            score += 10 + (descMatches * 2); // Базовые 10 + 2 за каждое вхождение
-        }
+        // 3) Взвешиваем по длине слова и позиции
+        queryWords.forEach((word, index) => {
+            const occurrences = this.countOccurrences(combinedText, word);
+            if (occurrences > 0) {
+                // Чем длиннее слово и чем раньше в отсортированном списке - тем больше вес
+                const wordWeight = word.length * (queryWords.length - index + 1) * 10;
+                score += occurrences * wordWeight;
+            }
+        });
         
         return score;
+    }
+
+    // Подсчёт вхождений подстроки (неперекрывающиеся), регистронезависимый текст заранее приведён к lowerCase
+    countOccurrences(text, term) {
+        if (!text || !term) return 0;
+        const regex = new RegExp(this.escapeRegExp(term), 'g');
+        const matches = text.match(regex);
+        return matches ? matches.length : 0;
     }
 
     /**
