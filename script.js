@@ -81,7 +81,7 @@ class TextUtils {
     static highlightMatches(text, query, className = CSS_CLASSES.HIGHLIGHT) {
         if (!text || !query) return text || '';
         
-        const queryWords = query.split(/\s+/).filter(word => word.length > 0);
+        const queryWords = query.split(/\s+/).filter(word => word.length > 1);
         let highlightedText = text;
         
         queryWords.forEach(word => {
