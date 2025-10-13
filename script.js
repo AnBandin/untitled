@@ -614,7 +614,7 @@ class SearchUI {
         const highlightedDescription = TextUtils.highlightMatches(cleanDescription, query, CSS_CLASSES.HIGHLIGHT_DESCRIPTION);
         
         const aonUrl = `https://2e.aonprd.com/Search.aspx?q=${encodeURIComponent(item.name)}`;
-        const highlightedId = TextUtils.highlightMatches(item._id, query, CSS_CLASSES.HIGHLIGHT);
+        const highlightedId = TextUtils.highlightMatches(item.name, query, CSS_CLASSES.HIGHLIGHT);
         const clickableId = `<a href="${aonUrl}" target="_blank" title="Открыть в Archives of Nethys">${highlightedId}</a>`;
         
         // Форматируем цену
@@ -626,13 +626,21 @@ class SearchUI {
         
         return `
             <div class="item-block">
-                <div class="item-header">
-                    <div class="item-name">${highlightedName}</div>
-                    <div class="item-level">Уровень: ${level}</div>
+                <div class="item-name">${highlightedName}</div>
+
+                ${item.nameRus || level !== '—' ? `
+                    <div class="item-rus-level-info">
+                        ${item.nameRus ? `<span class="item-name-rus">${highlightedNameRus}</span>` : ''}
+                        ${item.nameRus && level !== '—' ? ' | ' : ''}
+                        ${level !== '—' ? `<span class="item-level">Уровень: ${level}</span>` : ''}
+                    </div>
+                ` : ''}
+
+                <div class="item-id-price-info">
+                    <div class="item-id">ID: ${clickableId}</div>
+                    <div class="item-price">Цена: ${priceText}</div>
                 </div>
-                ${item.nameRus ? `<div class="item-name-rus">${highlightedNameRus}</div>` : ''}
-                <div class="item-id">ID: ${clickableId}</div>
-                <div class="item-price">Цена: ${priceText}</div>
+
                 <div class="item-description">${highlightedDescription}</div>
             </div>
         `;
