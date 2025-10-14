@@ -305,36 +305,40 @@ class ItemSearch {
     calculateRelevanceScore(item, key, query) {
         let score = 0;
         const queryLower = query.toLowerCase();
-        
-        // Формируем единый текст для подсчётов
-        const combinedText = [
+
+        // Тексты для разных приоритетов
+        const titleText = [
             (item.name || ''),
-            (item.nameRus || ''),
-            key,
-            (item.description || '')
+            (item.nameRus || '')
         ].join(' ').toLowerCase();
-        
-        // 1) Полные совпадения фразы - высший приоритет
-        const exactPhraseCount = this.countOccurrences(combinedText, queryLower);
-        if (exactPhraseCount > 0) {
-            score += exactPhraseCount * 1000;
+        const descriptionText = (item.description || '').toLowerCase();
+        const combinedText = [titleText, key ? String(key).toLowerCase() : '', descriptionText]
+            .join(' ').trim();
+
+        // 1) Точное совпадение всей фразы (как отдельной словоформы) в любом поле — максимальный приоритет
+        const exactAnywhere = this.countWholePhraseOccurrencesUnicode(combinedText, queryLower);
+        if (exactAnywhere > 0) {
+            // Большой коэффициент, чтобы гарантировать приоритет над остальными
+            score += exactAnywhere * 1000000;
         }
-        
-        // 2) Разбиваем запрос на слова и сортируем по длине
-        const queryWords = queryLower.split(/\s+/)
-            .filter(word => word.length > 1) // убираем однобуквенные
-            .sort((a, b) => b.length - a.length); // сортируем по убыванию длины
-        
-        // 3) Взвешиваем по длине слова и позиции
-        queryWords.forEach((word, index) => {
-            const occurrences = this.countOccurrences(combinedText, word);
-            if (occurrences > 0) {
-                // Чем длиннее слово и чем раньше в отсортированном списке - тем больше вес
-                const wordWeight = word.length * (queryWords.length - index + 1) * 10;
-                score += occurrences * wordWeight;
-            }
-        });
-        
+
+        // 2) Совпадение фразы в заголовке (name/nameRus)
+        const exactInTitle = this.countWholePhraseOccurrencesUnicode(titleText, queryLower);
+        if (exactInTitle > 0) {
+            score += exactInTitle * 10000;
+        }
+
+        // 3) Совпадение фразы в описании и их количество
+        const exactInDescription = this.countWholePhraseOccurrencesUnicode(descriptionText, queryLower);
+        if (exactInDescription > 0) {
+            score += exactInDescription * 100;
+        }
+
+        // 4) Если фраза является подстрокой (без учёта границ слова) — лёгкий бонус как самый низкий приоритет
+        if (queryLower && combinedText.includes(queryLower)) {
+            score += 1;
+        }
+
         return score;
     }
 
@@ -344,6 +348,28 @@ class ItemSearch {
         const regex = new RegExp(this.escapeRegExp(term), 'g');
         const matches = text.match(regex);
         return matches ? matches.length : 0;
+    }
+
+    /**
+     * Подсчитывает точные вхождения целой фразы с учётом «словоподобных» границ для Unicode.
+     * Работает регистронезависимо, ожидается, что text и phrase уже приведены к lowerCase.
+     * Границы определяются как не-буквенно-цифровые символы (по Unicode), либо начало/конец строки.
+     * @param {string} text
+     * @param {string} phrase
+     * @returns {number}
+     */
+    countWholePhraseOccurrencesUnicode(text, phrase) {
+        if (!text || !phrase) return 0;
+        const escaped = this.escapeRegExp(phrase);
+        // Используем окрестности, чтобы имитировать границы слова для Unicode без lookbehind
+        // Матч считается валидным, если слева граница (^ или не буква/цифра),
+        // а справа конец строки или не буква/цифра
+        const regex = new RegExp(`(?:^|[^\\p{L}\\p{N}])(${escaped})(?=[^\\p{L}\\p{N}]|$)`, 'gu');
+        let count = 0;
+        while (regex.exec(text) !== null) {
+            count += 1;
+        }
+        return count;
     }
 
     /**
