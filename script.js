@@ -221,7 +221,7 @@ class SearchUI {
         
         this.filters = {
             maxLevel: 20,
-            maxPrice: 100, // в GP
+            maxPrice: 0, // 0 = показывать все предметы независимо от цены
             sortByPrice: false,
             sortDirection: 'asc' // 'asc' для возрастания, 'desc' для убывания
         };
@@ -469,7 +469,7 @@ class SearchUI {
      */
     updatePriceFilter() {
         if (this.maxPriceInput) {
-            this.filters.maxPrice = parseInt(this.maxPriceInput.value) || 100;
+            this.filters.maxPrice = parseInt(this.maxPriceInput.value) || 0;
         }
     }
 
@@ -477,7 +477,7 @@ class SearchUI {
      * Обновляет отображение конвертера валют
      */
     updatePriceConverter() {
-        const gpValue = parseInt(this.maxPriceInput?.value) || 100;
+        const gpValue = parseInt(this.maxPriceInput?.value) || 0;
         
         // Конвертируем GP в другие валюты
         const ppValue = Math.round(gpValue / 10 * 100) / 100; // 1 PP = 10 GP
@@ -534,15 +534,7 @@ class SearchUI {
                 }
             }
 
-            // Фильтр по цене
-            const priceValue = item.system?.price?.value;
-            if (priceValue) {
-                const itemPriceInGP = this.convertPriceToGP(priceValue);
-                if (itemPriceInGP > this.filters.maxPrice) {
-                    return false;
-                }
-            }
-
+            // Убираем фильтр по цене - показываем все предметы независимо от стоимости
             return true;
         });
 
@@ -594,7 +586,7 @@ class SearchUI {
      */
     clearAllFilters() {
         this.filters.maxLevel = 20;
-        this.filters.maxPrice = 100; // 100 GP
+        this.filters.maxPrice = 0; // 0 = все предметы
         this.filters.sortByPrice = false;
         this.filters.sortDirection = 'asc';
         
@@ -605,7 +597,7 @@ class SearchUI {
         
         // Сбрасываем input максимальной цены
         if (this.maxPriceInput) {
-            this.maxPriceInput.value = '100';
+            this.maxPriceInput.value = '0';
         }
         
         // Сбрасываем кнопку сортировки
