@@ -416,22 +416,33 @@ class ItemSearch {
         }
         
         return queryWords.every(word => {
-            // Точное совпадение
-            if (textLower.includes(word)) return true;
-            
-            // Частичное совпадение для слов длиннее 3 символов
-            if (word.length >= 3) {
-                return textLower.split(/\s+/).some(textWord => {
-                    // Проверяем, что совпадение достаточно значимое
-                    const minLength = Math.min(word.length, textWord.length);
-                    const maxLength = Math.max(word.length, textWord.length);
-                    const similarity = minLength / maxLength;
-                    
-                    return (textWord.startsWith(word) || word.startsWith(textWord)) && 
-                           similarity >= 0.6; // Минимум 60% совпадения
-                });
+            // 1. Точное совпадение подстроки - самый надежный способ
+            if (textLower.includes(word)) {
+                return true;
             }
-            return false;
+            
+            // 2. Поиск по словам в тексте для частичных совпадений
+            const textWords = textLower.split(/\s+/);
+            
+            // Для коротких слов (2-3 символа) ищем только точные совпадения
+            if (word.length <= 3) {
+                return textWords.includes(word);
+            }
+            
+            // Для длинных слов (4+ символа) ищем частичные совпадения
+            return textWords.some(textWord => {
+                // Проверяем, что одно слово начинается с другого
+                if (textWord.startsWith(word) || word.startsWith(textWord)) {
+                    return true;
+                }
+                
+                // Проверяем схожесть для более гибкого поиска
+                const minLength = Math.min(word.length, textWord.length);
+                const maxLength = Math.max(word.length, textWord.length);
+                const similarity = minLength / maxLength;
+                
+                return similarity >= 0.6; // Минимум 60% совпадения
+            });
         });
     }
 
