@@ -136,13 +136,15 @@ class ItemSearch {
 
 
     /**
-     * Выполняет поиск по нормализованному запросу
+     * Выполняет многоуровневый поиск по нормализованному запросу
      * @param {string} normalizedQuery - Нормализованный запрос
      * @returns {Array} Результаты поиска
      */
     performSearch(normalizedQuery) {
-        // Простой поиск по всем полям без ограничений
-        const results = this.items.filter(item => {
+        const queryWords = normalizedQuery.split(/\s+/).filter(word => word.length > 0);
+        
+        // 1. Поиск по полной фразе (максимальный приоритет)
+        const exactMatches = this.items.filter(item => {
             const name = (item.name || '').toLowerCase();
             const nameRus = (item.nameRus || '').toLowerCase();
             const description = (item.description || '').toLowerCase();
@@ -152,7 +154,60 @@ class ItemSearch {
                    description.includes(normalizedQuery);
         });
 
-        return results;
+        // 2. Поиск по отдельным словам (если есть несколько слов)
+        const wordMatches = [];
+        if (queryWords.length > 1) {
+            queryWords.forEach((word, index) => {
+                const matches = this.items.filter(item => {
+                    const name = (item.name || '').toLowerCase();
+                    const nameRus = (item.nameRus || '').toLowerCase();
+                    const description = (item.description || '').toLowerCase();
+                    
+                    return name.includes(word) || 
+                           nameRus.includes(word) || 
+                           description.includes(word);
+                });
+                
+                // Добавляем приоритет: первое слово важнее второго и т.д.
+                matches.forEach(match => {
+                    if (!wordMatches.some(existing => existing.item === match)) {
+                        wordMatches.push({
+                            item: match,
+                            priority: queryWords.length - index // Первое слово = высший приоритет
+                        });
+                    }
+                });
+            });
+        }
+
+        // Объединяем результаты с приоритетами
+        const allResults = [];
+        
+        // Добавляем точные совпадения с максимальным приоритетом
+        exactMatches.forEach(item => {
+            allResults.push({
+                item: item,
+                priority: 1000 // Максимальный приоритет для точных совпадений
+            });
+        });
+        
+        // Добавляем совпадения по словам
+        allResults.push(...wordMatches);
+        
+        // Убираем дубликаты и сортируем по приоритету
+        const uniqueResults = [];
+        const seenItems = new Set();
+        
+        allResults
+            .sort((a, b) => b.priority - a.priority) // Сортируем по убыванию приоритета
+            .forEach(result => {
+                if (!seenItems.has(result.item._id)) {
+                    seenItems.add(result.item._id);
+                    uniqueResults.push(result.item);
+                }
+            });
+
+        return uniqueResults;
     }
 
 }
