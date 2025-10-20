@@ -1,478 +1,44 @@
 // Импортируем данные предметов из отдельного файла
 import items from './items.js';
 
-
 /**
- * Константы приложения
- * Применяет принцип DRY - централизованное хранение констант
+ * Упрощенный поисковик предметов PF2E
+ * Основной класс приложения - объединяет поиск и UI
  */
-const APP_CONFIG = {
-    NOTIFICATION_DURATION: 3000,
-    SEARCH_PARAM_KEY: 'q',
-    PAGE_PARAM_KEY: 'page',
-    DEFAULT_PAGE: 1,
-    ANIMATION_DURATION: 300
-};
-
-/**
- * Селекторы DOM элементов
- */
-const DOM_SELECTORS = {
-    INPUT: '#userInput',
-    BUTTON: '#searchButton',
-    RESULT: '#result',
-    MAX_LEVEL_INPUT: '#maxLevelInput',
-    MAX_PRICE_INPUT: '#maxPriceInput',
-    CLEAR_FILTERS: '#clearFilters',
-    SORT_BY_PRICE: '#sortByPrice',
-    PP_VALUE: '#ppValue',
-    SP_VALUE: '#spValue',
-    CP_VALUE: '#cpValue'
-};
-
-/**
- * CSS классы
- */
-const CSS_CLASSES = {
-    HIGHLIGHT: 'highlight',
-    HIGHLIGHT_NAME: 'highlight-name',
-    HIGHLIGHT_DESCRIPTION: 'highlight-description',
-    NOTIFICATION: 'notification'
-};
-
-/**
- * Утилиты для работы с URL параметрами
- */
-class URLUtils {
-    static getURLParameter(param) {
-        return new URLSearchParams(window.location.search).get(param);
-    }
-
-    static setURLParameter(param, value) {
-        const url = new URL(window.location);
-        if (value) {
-            url.searchParams.set(param, value);
-        } else {
-            url.searchParams.delete(param);
-        }
-        window.history.pushState({}, '', url);
-    }
-
-    static clearURLParameters() {
-        const url = new URL(window.location);
-        url.search = '';
-        window.history.pushState({}, '', url);
-    }
-
-    static getSearchParams() {
-        return {
-            query: this.getURLParameter(APP_CONFIG.SEARCH_PARAM_KEY) || '',
-            page: parseInt(this.getURLParameter(APP_CONFIG.PAGE_PARAM_KEY)) || APP_CONFIG.DEFAULT_PAGE
-        };
-    }
-
-    static setSearchParams(query, page = APP_CONFIG.DEFAULT_PAGE) {
-        this.setURLParameter(APP_CONFIG.SEARCH_PARAM_KEY, query);
-        if (page > APP_CONFIG.DEFAULT_PAGE) {
-            this.setURLParameter(APP_CONFIG.PAGE_PARAM_KEY, page.toString());
-        } else {
-            this.setURLParameter(APP_CONFIG.PAGE_PARAM_KEY, '');
-        }
-    }
-}
-
-/**
- * Утилиты для работы с текстом и поиском
- */
-class TextUtils {
-    static highlightMatches(text, query, className = CSS_CLASSES.HIGHLIGHT) {
-        if (!text || !query) return text || '';
-        
-        const queryWords = query.split(/\s+/).filter(word => word.length > 1);
-        let highlightedText = text;
-        
-        queryWords.forEach(word => {
-            const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const regex = new RegExp(`(${escapedWord})`, 'gi');
-            highlightedText = highlightedText.replace(regex, `<span class="${className}">$1</span>`);
-        });
-        
-        return highlightedText;
-    }
-
-    static cleanText(text) {
-        if (!text) return '';
-        
-        return text
-            .replace(/<[^>]*>/g, '') // HTML теги
-            .replace(/@UUID\[[^\]]*\]/g, '') // UUID ссылки
-            .replace(/@Trait\[[^\]]*\]/g, '') // Trait ссылки
-            .trim();
-    }
-}
-
-/**
- * Класс для поиска предметов
- * Применяет принцип Single Responsibility - отвечает только за поиск
- */
-class ItemSearch {
-    constructor(items) {
+class PF2ESearchApp {
+    constructor() {
         this.items = items;
-        this.searchStrategies = [
-            this.searchByName.bind(this),
-            this.searchByNameRus.bind(this),
-            this.searchByDescription.bind(this),
-            this.searchByKey.bind(this)
-        ];
-    }
-
-    /**
-     * Выполняет поиск предметов по запросу
-     * @param {string} query - Поисковый запрос
-     * @returns {Array} Массив найденных предметов
-     */
-    search(query) {
-        if (!this.isValidQuery(query)) {
-            return [];
-        }
-        
-        const normalizedQuery = this.normalizeQuery(query);
-        
-        // Проверяем, является ли запрос осмысленным
-        if (!this.isMeaningfulQuery(normalizedQuery)) {
-            return [];
-        }
-        
-        return this.performSearch(normalizedQuery);
-    }
-
-    /**
-     * Проверяет валидность поискового запроса
-     * @param {string} query - Запрос для проверки
-     * @returns {boolean} true если запрос валиден
-     */
-    isValidQuery(query) {
-        return typeof query === 'string' && query.trim().length > 0;
-    }
-
-    /**
-     * Нормализует поисковый запрос
-     * @param {string} query - Исходный запрос
-     * @returns {string} Нормализованный запрос
-     */
-    normalizeQuery(query) {
-        return query.trim().toLowerCase();
-    }
-
-    /**
-     * Проверяет, является ли запрос осмысленным
-     * @param {string} query - Нормализованный запрос
-     * @returns {boolean} true если запрос осмысленный
-     */
-    isMeaningfulQuery(query) {
-        // Проверяем длину запроса
-        if (query.length < 2) {
-            return false;
-        }
-        
-        // Проверяем, не является ли запрос случайным набором символов
-        if (this.isRandomString(query)) {
-            return false;
-        }
-        
-        // Проверяем, содержит ли запрос хотя бы одну букву
-        if (!/[а-яёa-z]/.test(query)) {
-            return false;
-        }
-        
-        return true;
-    }
-
-    /**
-     * Проверяет, является ли строка случайным набором символов
-     * @param {string} str - Строка для проверки
-     * @returns {boolean} true если строка выглядит как случайная
-     */
-    isRandomString(str) {
-        // Проверяем повторяющиеся символы (более 3 одинаковых подряд)
-        if (/(.)\1{3,}/.test(str)) {
-            return true;
-        }
-        
-        // Проверяем чередование символов (ававава, ывывыв)
-        if (/(.)(.)\1\2\1/.test(str)) {
-            return true;
-        }
-        
-        // Проверяем слишком много согласных подряд (более 4)
-        if (/[бвгджзклмнпрстфхцчшщ]{5,}/.test(str)) {
-            return true;
-        }
-        
-        // Проверяем слишком много гласных подряд (более 3)
-        if (/[аеёиоуыэюя]{4,}/.test(str)) {
-            return true;
-        }
-        
-        return false;
-    }
-
-    /**
-     * Выполняет поиск по нормализованному запросу
-     * @param {string} normalizedQuery - Нормализованный запрос
-     * @returns {Array} Результаты поиска
-     */
-    performSearch(normalizedQuery) {
-        const items = Array.isArray(this.items) ? this.items : Object.entries(this.items);
-        const matchingItems = items.filter((item) => {
-            // Если items - массив, item уже является объектом
-            // Если items - объект, item это [key, value]
-            const itemData = Array.isArray(this.items) ? item : item[1];
-            const itemKey = Array.isArray(this.items) ? item._id : item[0];
-            
-            return this.searchStrategies.some(strategy => 
-                strategy(itemData, itemKey, normalizedQuery)
-            );
-        });
-
-        // Ранжируем и ограничиваем результаты
-        const rankedItems = this.rankResults(matchingItems, normalizedQuery);
-        return this.mapToSearchResults(rankedItems.slice(0, 50));
-    }
-
-    /**
-     * Ранжирует результаты поиска по релевантности
-     * @param {Array} items - Найденные предметы
-     * @param {string} query - Поисковый запрос
-     * @returns {Array} Отранжированные результаты
-     */
-    rankResults(items, query) {
-        return items.sort((itemA, itemB) => {
-            // Если items - массив, item уже является объектом
-            // Если items - объект, item это [key, value]
-            const itemDataA = Array.isArray(this.items) ? itemA : itemA[1];
-            const itemKeyA = Array.isArray(this.items) ? itemA._id : itemA[0];
-            const itemDataB = Array.isArray(this.items) ? itemB : itemB[1];
-            const itemKeyB = Array.isArray(this.items) ? itemB._id : itemB[0];
-            
-            const scoreA = this.calculateRelevanceScore(itemDataA, itemKeyA, query);
-            const scoreB = this.calculateRelevanceScore(itemDataB, itemKeyB, query);
-            return scoreB - scoreA; // Сортируем по убыванию релевантности
-        });
-    }
-
-
-    /**
-     * Экранирует специальные символы для регулярных выражений
-     * @param {string} string - Строка для экранирования
-     * @returns {string} Экранированная строка
-     */
-    escapeRegExp(string) {
-        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    }
-
-    /**
-     * Вычисляет релевантность предмета для запроса
-     * @param {Object} item - Данные предмета
-     * @param {string} key - Ключ предмета
-     * @param {string} query - Поисковый запрос
-     * @returns {number} Оценка релевантности
-     */
-    calculateRelevanceScore(item, key, query) {
-        let score = 0;
-        const queryLower = query.toLowerCase();
-
-        // Тексты для разных приоритетов
-        const titleText = [
-            (item.name || ''),
-            (item.nameRus || '')
-        ].join(' ').toLowerCase();
-        const descriptionText = (item.description || '').toLowerCase();
-        const combinedText = [titleText, key ? String(key).toLowerCase() : '', descriptionText]
-            .join(' ').trim();
-
-        // 1) Точное совпадение всей фразы в заголовке - максимальный приоритет
-        if (titleText.includes(queryLower)) {
-            score += 10000;
-        }
-
-        // 2) Точное совпадение всей фразы в описании
-        if (descriptionText.includes(queryLower)) {
-            score += 1000;
-        }
-
-        // 3) Совпадение в любом поле
-        if (combinedText.includes(queryLower)) {
-            score += 100;
-        }
-
-        // 4) Поиск по отдельным словам
-        const queryWords = queryLower.split(/\s+/).filter(word => word.length >= 2);
-        let wordMatches = 0;
-        
-        queryWords.forEach(word => {
-            if (titleText.includes(word)) {
-                wordMatches += 10; // Слово в заголовке
-            } else if (descriptionText.includes(word)) {
-                wordMatches += 1; // Слово в описании
-            }
-        });
-        
-        score += wordMatches;
-
-        return score;
-    }
-
-
-    /**
-     * Поиск по названию предмета
-     */
-    searchByName(item, key, query) {
-        return item.name && this.fuzzySearch(item.name, query);
-    }
-
-    /**
-     * Поиск по русскому названию предмета
-     */
-    searchByNameRus(item, key, query) {
-        return item.nameRus && this.fuzzySearch(item.nameRus, query);
-    }
-
-    /**
-     * Поиск по описанию предмета
-     */
-    searchByDescription(item, key, query) {
-        return item.description && this.fuzzySearch(item.description, query);
-    }
-
-    /**
-     * Поиск по ключу предмета
-     */
-    searchByKey(item, key, query) {
-        return key && this.fuzzySearch(key, query);
-    }
-
-
-    /**
-     * Простой и надежный поиск
-     */
-    fuzzySearch(text, query) {
-        if (!text || !query) return false;
-        
-        const textLower = text.toLowerCase();
-        const queryLower = query.toLowerCase();
-        
-        // 1. Точное совпадение всей фразы
-        if (textLower.includes(queryLower)) {
-            return true;
-        }
-        
-        // 2. Поиск по отдельным словам
-        const queryWords = queryLower.split(/\s+/).filter(word => word.length >= 2);
-        if (queryWords.length === 0) return false;
-        
-        // Проверяем, что все слова запроса найдены в тексте
-        return queryWords.every(word => textLower.includes(word));
-    }
-
-    /**
-     * Преобразует найденные предметы в формат результатов поиска
-     * @param {Array} matchingItems - Найденные предметы
-     * @returns {Array} Результаты поиска
-     */
-    mapToSearchResults(matchingItems) {
-        return matchingItems.map((item) => {
-            // Если items - массив, item уже является объектом
-            // Если items - объект, item это [key, value]
-            const itemData = Array.isArray(this.items) ? item : item[1];
-            const itemKey = Array.isArray(this.items) ? item._id : item[0];
-            
-            return {
-                ...itemData,
-                key: itemKey
-            };
-        });
-    }
-}
-
-/**
- * Класс для управления уведомлениями
- */
-class NotificationManager {
-    static show(message, type = 'success', duration = APP_CONFIG.NOTIFICATION_DURATION) {
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.textContent = message;
-        
-        // Стили уведомления
-        Object.assign(notification.style, {
-            position: 'fixed',
-            top: '20px',
-            right: '20px',
-            padding: '12px 20px',
-            borderRadius: 'var(--border-radius)',
-            zIndex: '1000',
-            fontWeight: '500',
-            boxShadow: '0 4px 12px var(--shadow-hover)',
-            animation: 'slideIn 0.3s ease',
-            maxWidth: '300px',
-            wordWrap: 'break-word',
-            color: 'white',
-            backgroundColor: type === 'success' ? 'var(--success)' : 
-                           type === 'error' ? 'var(--error)' : 'var(--warning)'
-        });
-        
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.style.animation = `slideOut ${APP_CONFIG.ANIMATION_DURATION}ms ease`;
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, APP_CONFIG.ANIMATION_DURATION);
-        }, duration);
-    }
-}
-
-/**
- * Класс для управления UI поиска
- * Применяет принцип Single Responsibility - отвечает только за UI
- */
-class SearchUI {
-    constructor(searchEngine) {
-        this.searchEngine = searchEngine;
-        this.input = document.querySelector(DOM_SELECTORS.INPUT);
-        this.button = document.querySelector(DOM_SELECTORS.BUTTON);
-        this.resultDiv = document.querySelector(DOM_SELECTORS.RESULT);
-        this.maxLevelInput = document.querySelector(DOM_SELECTORS.MAX_LEVEL_INPUT);
-        this.maxPriceInput = document.querySelector(DOM_SELECTORS.MAX_PRICE_INPUT);
-        this.clearFilters = document.querySelector(DOM_SELECTORS.CLEAR_FILTERS);
-        this.sortByPrice = document.querySelector(DOM_SELECTORS.SORT_BY_PRICE);
-        this.ppValue = document.querySelector(DOM_SELECTORS.PP_VALUE);
-        this.spValue = document.querySelector(DOM_SELECTORS.SP_VALUE);
-        this.cpValue = document.querySelector(DOM_SELECTORS.CP_VALUE);
-        
-        if (!this.input || !this.button || !this.resultDiv) {
-            throw new Error('Не найдены обязательные DOM элементы');
-        }
-        
-        this.filters = {
-            maxLevel: 20,
-            maxPrice: 100, // в GP
-            sortByPrice: false,
-            sortDirection: 'asc' // 'asc' для возрастания, 'desc' для убывания
-        };
-        
+        this.cache = new Map(); // Простое кэширование результатов
         this.init();
     }
 
     /**
-     * Инициализация UI
+     * Инициализация приложения
      */
     init() {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.setup());
+        } else {
+            this.setup();
+        }
+    }
+
+    /**
+     * Настройка приложения
+     */
+    setup() {
+        this.input = document.querySelector('#userInput');
+        this.button = document.querySelector('#searchButton');
+        this.resultDiv = document.querySelector('#result');
+        this.maxLevelInput = document.querySelector('#maxLevelInput');
+        this.maxPriceInput = document.querySelector('#maxPriceInput');
+        
+        if (!this.input || !this.button || !this.resultDiv) {
+            console.error('Не найдены обязательные DOM элементы');
+            return;
+        }
+
         this.bindEvents();
-        this.updatePriceConverter(); // Инициализируем конвертер
         this.loadFromURL();
     }
 
@@ -480,7 +46,7 @@ class SearchUI {
      * Привязка обработчиков событий
      */
     bindEvents() {
-        // Обработка Enter в инпуте
+        // Поиск по Enter
         this.input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -488,113 +54,131 @@ class SearchUI {
             }
         });
 
-        // Обработка клика по кнопке
-        this.button.addEventListener('click', () => {
-            this.performSearch();
-        });
+        // Поиск по клику
+        this.button.addEventListener('click', () => this.performSearch());
 
-        // Обработка input максимального уровня
+        // Фильтры
         if (this.maxLevelInput) {
-            this.maxLevelInput.addEventListener('input', () => {
-                this.updateLevelFilter();
-                this.performSearch();
-            });
+            this.maxLevelInput.addEventListener('input', () => this.performSearch());
         }
-
-        // Обработка input максимальной цены
         if (this.maxPriceInput) {
-            this.maxPriceInput.addEventListener('input', () => {
-                this.updatePriceFilter();
-                this.updatePriceConverter();
-                this.performSearch();
-            });
-        }
-
-        // Обработка сортировки по цене
-        if (this.sortByPrice) {
-            this.sortByPrice.addEventListener('click', () => {
-                this.togglePriceSort();
-                this.performSearch();
-            });
-        }
-
-        // Обработка очистки фильтров
-        if (this.clearFilters) {
-            this.clearFilters.addEventListener('click', () => {
-                this.clearAllFilters();
-            });
+            this.maxPriceInput.addEventListener('input', () => this.performSearch());
         }
     }
 
     /**
-     * Загружает поисковый запрос из URL при инициализации
+     * Загрузка поискового запроса из URL
      */
     loadFromURL() {
-        const params = URLUtils.getSearchParams();
-        if (params.query) {
-            this.input.value = params.query;
+        const urlParams = new URLSearchParams(window.location.search);
+        const query = urlParams.get('q');
+        if (query) {
+            this.input.value = query;
             this.performSearch();
         }
     }
 
     /**
-     * Выполняет поиск и отображает результаты
+     * Выполнение поиска
      */
     performSearch() {
         const query = this.input.value.trim();
         
-        // Обновляем URL с параметром поиска
-        URLUtils.setSearchParams(query);
+        // Обновляем URL
+        this.updateURL(query);
         
         if (!query) {
-            this.showEmptyState();
+            this.showWelcome();
             return;
         }
-        
-        const results = this.searchEngine.search(query);
-        const filteredResults = this.applyFilters(results);
-        this.displayResults(filteredResults, query);
+
+        const results = this.searchItems(query);
+        this.displayResults(results, query);
     }
 
     /**
-     * Отображает пустое состояние
+     * Упрощенный поиск предметов
      */
-    showEmptyState() {
-        this.resultDiv.innerHTML = `
-            <div class="welcome-message">
-                <h2>Добро пожаловать!</h2>
-                <p>Введите поисковый запрос выше, чтобы найти предметы из Pathfinder 2E.</p>
-                <div class="search-tips">
-                    <h3>Советы по поиску:</h3>
-                    <ul>
-                        <li>Ищите по названию предмета</li>
-                        <li>Используйте ключевые слова из описания</li>
-                        <li>Попробуйте искать по типу предмета (оружие, броня, зелье)</li>
-                    </ul>
-                </div>
-            </div>
-        `;
+    searchItems(query) {
+        if (!query || query.length < 2) return [];
+
+        // Проверяем кэш
+        if (this.cache.has(query)) {
+            return this.cache.get(query);
+        }
+
+        const normalizedQuery = query.toLowerCase().trim();
+        const items = Array.isArray(this.items) ? this.items : Object.entries(this.items);
+        
+        const results = items.filter(item => {
+            const itemData = Array.isArray(this.items) ? item : item[1];
+            const searchText = [
+                itemData.name || '',
+                itemData.nameRus || '',
+                itemData.description || '',
+                itemData._id || ''
+            ].join(' ').toLowerCase();
+            
+            return searchText.includes(normalizedQuery);
+        }).slice(0, 50); // Ограничиваем результаты
+
+        // Применяем фильтры
+        const filteredResults = this.applyFilters(results);
+        
+        // Кэшируем результат
+        this.cache.set(query, filteredResults);
+        
+        return filteredResults;
     }
 
     /**
-     * Отображает результаты поиска
-     * @param {Array} results - Результаты поиска
-     * @param {string} query - Поисковый запрос
+     * Применение простых фильтров
+     */
+    applyFilters(results) {
+        let filtered = results;
+
+        // Фильтр по уровню
+        const maxLevel = parseInt(this.maxLevelInput?.value) || 20;
+        filtered = filtered.filter(item => {
+            const level = item.system?.level?.value;
+            return level === null || level === undefined || level <= maxLevel;
+        });
+
+        // Фильтр по цене
+        const maxPrice = parseInt(this.maxPriceInput?.value) || 100;
+        filtered = filtered.filter(item => {
+            const price = item.system?.price?.value;
+            if (!price) return true;
+            
+            const priceInGP = this.convertPriceToGP(price);
+            return priceInGP <= maxPrice;
+        });
+
+        return filtered;
+    }
+
+    /**
+     * Конвертация цены в GP
+     */
+    convertPriceToGP(priceValue) {
+        let totalGP = 0;
+        if (priceValue.pp) totalGP += priceValue.pp * 10;
+        if (priceValue.gp) totalGP += priceValue.gp;
+        if (priceValue.sp) totalGP += priceValue.sp * 0.1;
+        if (priceValue.cp) totalGP += priceValue.cp * 0.01;
+        return totalGP;
+    }
+
+    /**
+     * Отображение результатов
      */
     displayResults(results, query) {
         if (results.length === 0) {
             this.showNoResults(query);
             return;
         }
-        
-        let html = `
-            <div class="share-section">
-                <button class="share-button" onclick="window.shareResults('${query}')" title="Скопировать ссылку с результатами поиска">
-                    📤 Скопировать ссылку
-                </button>
-            </div>
-        `;
-        
+
+        let html = '';
         results.forEach(item => {
             html += this.createItemHTML(item, query);
         });
@@ -603,9 +187,65 @@ class SearchUI {
     }
 
     /**
-     * Форматирует цену предмета
-     * @param {Object} priceValue - Объект с ценой
-     * @returns {string} Отформатированная цена
+     * Создание HTML для предмета
+     */
+    createItemHTML(item, query) {
+        const cleanDescription = this.cleanText(item.description || '');
+        const highlightedName = this.highlightText(item.name || '', query);
+        const highlightedNameRus = this.highlightText(item.nameRus || '', query);
+        const highlightedDescription = this.highlightText(cleanDescription, query);
+        
+        const aonUrl = `https://2e.aonprd.com/Search.aspx?q=${encodeURIComponent(item.name)}`;
+        const level = item.system?.level?.value || '—';
+        const price = this.formatPrice(item.system?.price?.value);
+        
+        return `
+            <div class="item-block">
+                <div class="item-name-level">
+                    ${item.nameRus ? `<div class="item-name">${highlightedNameRus}</div>` : ''}
+                    <div class="item-id">ID: <a href="${aonUrl}" target="_blank" class="item-id-link">${highlightedName}</a></div>
+                </div>
+                <div class="item-id-price">
+                    <div class="item-level">Уровень: ${level}</div>
+                    <div class="item-price">Цена: ${price}</div>
+                </div>
+                <div class="item-description">${highlightedDescription}</div>
+            </div>
+        `;
+    }
+
+    /**
+     * Подсветка текста
+     */
+    highlightText(text, query) {
+        if (!text || !query) return text || '';
+        
+        const queryWords = query.split(/\s+/).filter(word => word.length > 1);
+        let highlightedText = text;
+        
+        queryWords.forEach(word => {
+            const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`(${escapedWord})`, 'gi');
+            highlightedText = highlightedText.replace(regex, '<span class="highlight">$1</span>');
+        });
+        
+        return highlightedText;
+    }
+
+    /**
+     * Очистка текста от HTML тегов
+     */
+    cleanText(text) {
+        if (!text) return '';
+        return text
+            .replace(/<[^>]*>/g, '')
+            .replace(/@UUID\[[^\]]*\]/g, '')
+            .replace(/@Trait\[[^\]]*\]/g, '')
+            .trim();
+    }
+
+    /**
+     * Форматирование цены
      */
     formatPrice(priceValue) {
         if (!priceValue || Object.keys(priceValue).length === 0) {
@@ -623,294 +263,52 @@ class SearchUI {
     }
 
     /**
-     * Создает HTML для одного предмета
-     * @param {Object} item - Данные предмета
-     * @param {string} query - Поисковый запрос
-     * @returns {string} HTML строка
+     * Отображение приветствия
      */
-    createItemHTML(item, query) {
-        const cleanDescription = TextUtils.cleanText(item.description);
-        const highlightedName = TextUtils.highlightMatches(item.name, query, CSS_CLASSES.HIGHLIGHT_NAME);
-        const highlightedNameRus = TextUtils.highlightMatches(item.nameRus || '', query, CSS_CLASSES.HIGHLIGHT_NAME);
-        const highlightedDescription = TextUtils.highlightMatches(cleanDescription, query, CSS_CLASSES.HIGHLIGHT_DESCRIPTION);
-        
-        const aonUrl = `https://2e.aonprd.com/Search.aspx?q=${encodeURIComponent(item.name)}`;
-        const highlightedId = TextUtils.highlightMatches(item.name, query, CSS_CLASSES.HIGHLIGHT);
-        const clickableId = `<a href="${aonUrl}" target="_blank" title="Открыть в Archives of Nethys" class="item-id-link">${highlightedId}</a>`;
-        
-        // Форматируем цену
-        const priceValue = item.system?.price?.value;
-        const priceText = priceValue ? this.formatPrice(priceValue) : '—';
-        
-        // Получаем уровень
-        const level = item.system?.level?.value || '—';
-        
-        return `
-            <div class="item-block">
-                <div class="item-name-level">
-                    ${item.nameRus ? `<div class="item-name">${highlightedNameRus}</div>` : ''}
-                    <div class="item-id">ID: ${clickableId}</div>
+    showWelcome() {
+        this.resultDiv.innerHTML = `
+            <div class="welcome-message">
+                <h2>Добро пожаловать!</h2>
+                <p>Введите поисковый запрос выше, чтобы найти предметы из Pathfinder 2E.</p>
+                <div class="search-tips">
+                    <h3>Советы по поиску:</h3>
+                    <ul>
+                        <li>Ищите по названию предмета</li>
+                        <li>Используйте ключевые слова из описания</li>
+                        <li>Попробуйте искать по типу предмета (оружие, броня, зелье)</li>
+                    </ul>
                 </div>
-                <div class="item-id-price">
-                    <div class="item-level">Уровень: ${level}</div>
-                    <div class="item-price">Цена: ${priceText}</div>
-                </div>
-                <div class="item-description">${highlightedDescription}</div>
             </div>
         `;
     }
 
     /**
-     * Отображает сообщение об отсутствии результатов
-     * @param {string} query - Поисковый запрос
+     * Отображение отсутствия результатов
      */
     showNoResults(query) {
         this.resultDiv.innerHTML = `
             <div class="no-results">
                 <strong>Предметы не найдены</strong><br>
                 По запросу "${query}" ничего не найдено. Попробуйте изменить поисковый запрос.
-                <div class="no-results-actions">
-                    <button class="clear-search-button" onclick="window.clearSearch()" title="Очистить поиск">
-                        🗑️ Очистить поиск
-                    </button>
-                </div>
             </div>
         `;
     }
 
     /**
-     * Копирует ссылку с результатами поиска в буфер обмена
-     * @param {string} query - Поисковый запрос
+     * Обновление URL
      */
-    shareResults(query) {
-        const url = window.location.href;
-        
-        navigator.clipboard.writeText(url).then(() => {
-            NotificationManager.show('Ссылка скопирована в буфер обмена!', 'success');
-        }).catch(err => {
-            console.error('Ошибка при копировании:', err);
-            NotificationManager.show('Не удалось скопировать ссылку', 'error');
-        });
-    }
-
-    /**
-     * Обновляет фильтр максимального уровня
-     */
-    updateLevelFilter() {
-        if (this.maxLevelInput) {
-            this.filters.maxLevel = parseInt(this.maxLevelInput.value) || 20;
-        }
-    }
-
-    /**
-     * Обновляет фильтр максимальной цены
-     */
-    updatePriceFilter() {
-        if (this.maxPriceInput) {
-            this.filters.maxPrice = parseInt(this.maxPriceInput.value) || 100;
-        }
-    }
-
-    /**
-     * Обновляет отображение конвертера валют
-     */
-    updatePriceConverter() {
-        const gpValue = parseInt(this.maxPriceInput?.value) || 100;
-        
-        // Конвертируем GP в другие валюты
-        const ppValue = Math.round(gpValue / 10 * 100) / 100; // 1 PP = 10 GP
-        const spValue = Math.round(gpValue * 10 * 100) / 100; // 1 GP = 10 SP
-        const cpValue = Math.round(gpValue * 100 * 100) / 100; // 1 GP = 100 CP
-        
-        // Обновляем отображение
-        if (this.ppValue) this.ppValue.textContent = ppValue.toFixed(2);
-        if (this.spValue) this.spValue.textContent = spValue.toFixed(0);
-        if (this.cpValue) this.cpValue.textContent = cpValue.toFixed(0);
-    }
-
-    /**
-     * Переключает сортировку по цене
-     */
-    togglePriceSort() {
-        if (!this.filters.sortByPrice) {
-            // Включаем сортировку по возрастанию
-            this.filters.sortByPrice = true;
-            this.filters.sortDirection = 'asc';
-        } else if (this.filters.sortDirection === 'asc') {
-            // Переключаем на убывание
-            this.filters.sortDirection = 'desc';
+    updateURL(query) {
+        const url = new URL(window.location);
+        if (query) {
+            url.searchParams.set('q', query);
         } else {
-            // Выключаем сортировку
-            this.filters.sortByPrice = false;
+            url.searchParams.delete('q');
         }
-        
-        // Обновляем текст кнопки
-        if (this.sortByPrice) {
-            if (!this.filters.sortByPrice) {
-                this.sortByPrice.textContent = '💰 Сортировать по цене';
-            } else if (this.filters.sortDirection === 'asc') {
-                this.sortByPrice.textContent = '💰 Цена: ↑ (дешевые)';
-            } else {
-                this.sortByPrice.textContent = '💰 Цена: ↓ (дорогие)';
-            }
-        }
-    }
-
-    /**
-     * Применяет фильтры к результатам поиска
-     * @param {Array} results - Результаты поиска
-     * @returns {Array} Отфильтрованные результаты
-     */
-    applyFilters(results) {
-        let filteredResults = results.filter(item => {
-            // Фильтр по уровню
-            const itemLevel = item.system?.level?.value;
-            if (itemLevel !== null && itemLevel !== undefined) {
-                // Показываем предметы от 0 до maxLevel включительно
-                if (itemLevel > this.filters.maxLevel) {
-                    return false;
-                }
-            }
-
-            // Фильтр по цене
-            const priceValue = item.system?.price?.value;
-            if (priceValue) {
-                const itemPriceInGP = this.convertPriceToGP(priceValue);
-                if (itemPriceInGP > this.filters.maxPrice) {
-                    return false;
-                }
-            }
-
-            return true;
-        });
-
-        // Сортировка по цене, если включена
-        if (this.filters.sortByPrice) {
-            filteredResults = this.sortResultsByPrice(filteredResults);
-        }
-
-        return filteredResults;
-    }
-
-    /**
-     * Сортирует результаты по цене
-     * @param {Array} results - Результаты для сортировки
-     * @returns {Array} Отсортированные результаты
-     */
-    sortResultsByPrice(results) {
-        return results.sort((itemA, itemB) => {
-            const priceA = this.convertPriceToGP(itemA.system?.price?.value || {});
-            const priceB = this.convertPriceToGP(itemB.system?.price?.value || {});
-            
-            if (this.filters.sortDirection === 'asc') {
-                return priceA - priceB; // От дешевых к дорогим
-            } else {
-                return priceB - priceA; // От дорогих к дешевым
-            }
-        });
-    }
-
-    /**
-     * Конвертирует цену предмета в GP (золотые монеты)
-     * @param {Object} priceValue - Объект с ценой предмета
-     * @returns {number} Цена в GP
-     */
-    convertPriceToGP(priceValue) {
-        let totalGP = 0;
-        
-        // Конвертируем все валюты в GP
-        if (priceValue.pp) totalGP += priceValue.pp * 10;     // 1 PP = 10 GP
-        if (priceValue.gp) totalGP += priceValue.gp;        // 1 GP = 1 GP
-        if (priceValue.sp) totalGP += priceValue.sp * 0.1;   // 1 SP = 0.1 GP
-        if (priceValue.cp) totalGP += priceValue.cp * 0.01;  // 1 CP = 0.01 GP
-        
-        return totalGP;
-    }
-
-    /**
-     * Очищает все фильтры
-     */
-    clearAllFilters() {
-        this.filters.maxLevel = 20;
-        this.filters.maxPrice = 100; // 100 GP
-        this.filters.sortByPrice = false;
-        this.filters.sortDirection = 'asc';
-        
-        // Сбрасываем input максимального уровня
-        if (this.maxLevelInput) {
-            this.maxLevelInput.value = '20';
-        }
-        
-        // Сбрасываем input максимальной цены
-        if (this.maxPriceInput) {
-            this.maxPriceInput.value = '100';
-        }
-        
-        // Сбрасываем кнопку сортировки
-        if (this.sortByPrice) {
-            this.sortByPrice.textContent = '💰 Сортировать по цене';
-        }
-        
-        // Обновляем конвертер
-        this.updatePriceConverter();
-        
-        // Перезапускаем поиск
-        this.performSearch();
-    }
-
-    /**
-     * Очищает поиск и возвращает к начальному состоянию
-     */
-    clearSearch() {
-        this.input.value = '';
-        this.clearAllFilters();
-        URLUtils.clearURLParameters();
-        this.showEmptyState();
-    }
-
-}
-
-/**
- * Главный класс приложения
- */
-class PF2ESearchApp {
-    constructor() {
-        this.searchEngine = new ItemSearch(items);
-        this.ui = null;
-    }
-
-    init() {
-        const initializeApp = () => {
-            try {
-                this.ui = new SearchUI(this.searchEngine);
-                this.setupGlobalHandlers();
-                this.setupEventListeners();
-            } catch (error) {
-                console.error('Ошибка при инициализации:', error);
-            }
-        };
-        
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeApp);
-        } else {
-            initializeApp();
-        }
-    }
-
-    setupGlobalHandlers() {
-        window.shareResults = (query) => this.ui.shareResults(query);
-        window.clearSearch = () => this.ui.clearSearch();
-    }
-
-    setupEventListeners() {
-        window.addEventListener('popstate', () => {
-            this.ui.loadFromURL();
-        });
+        window.history.pushState({}, '', url);
     }
 }
 
-// Инициализация приложения
+// Инициализация упрощенного приложения
 const app = new PF2ESearchApp();
-app.init();
 
 
