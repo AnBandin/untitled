@@ -108,15 +108,14 @@ class PF2ESearchApp {
         }
 
         const normalizedQuery = query.toLowerCase().trim();
-        const items = Array.isArray(this.items) ? this.items : Object.entries(this.items);
         
-        const results = items.filter(item => {
-            const itemData = Array.isArray(this.items) ? item : item[1];
+        // items - это массив объектов, поэтому работаем напрямую с ним
+        const results = this.items.filter(item => {
             const searchText = [
-                itemData.name || '',
-                itemData.nameRus || '',
-                itemData.description || '',
-                itemData._id || ''
+                item.name || '',
+                item.nameRus || '',
+                item.description || '',
+                item._id || ''
             ].join(' ').toLowerCase();
             
             return searchText.includes(normalizedQuery);
