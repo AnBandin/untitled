@@ -261,30 +261,6 @@ class ItemSearch {
         });
     }
 
-    /**
-     * Подсчитывает количество вхождений запроса в тексте
-     * @param {string} text - Текст для поиска
-     * @param {string} query - Поисковый запрос
-     * @returns {number} Количество вхождений
-     */
-    countMatches(text, query) {
-        if (!text || !query) return 0;
-        
-        // Подсчитываем точные вхождения
-        const exactMatches = (text.match(new RegExp(this.escapeRegExp(query), 'gi')) || []).length;
-        
-        // Подсчитываем вхождения по словам (для многословных запросов)
-        const queryWords = query.split(/\s+/).filter(word => word.length > 0);
-        let wordMatches = 0;
-        
-        queryWords.forEach(word => {
-            const matches = (text.match(new RegExp(this.escapeRegExp(word), 'gi')) || []).length;
-            wordMatches += matches;
-        });
-        
-        // Возвращаем максимум из точных совпадений и совпадений по словам
-        return Math.max(exactMatches, wordMatches);
-    }
 
     /**
      * Экранирует специальные символы для регулярных выражений
@@ -315,62 +291,38 @@ class ItemSearch {
         const combinedText = [titleText, key ? String(key).toLowerCase() : '', descriptionText]
             .join(' ').trim();
 
-        // 1) Точное совпадение всей фразы (как отдельной словоформы) в любом поле — максимальный приоритет
-        const exactAnywhere = this.countWholePhraseOccurrencesUnicode(combinedText, queryLower);
-        if (exactAnywhere > 0) {
-            // Большой коэффициент, чтобы гарантировать приоритет над остальными
-            score += exactAnywhere * 1000000;
+        // 1) Точное совпадение всей фразы в заголовке - максимальный приоритет
+        if (titleText.includes(queryLower)) {
+            score += 10000;
         }
 
-        // 2) Совпадение фразы в заголовке (name/nameRus)
-        const exactInTitle = this.countWholePhraseOccurrencesUnicode(titleText, queryLower);
-        if (exactInTitle > 0) {
-            score += exactInTitle * 10000;
+        // 2) Точное совпадение всей фразы в описании
+        if (descriptionText.includes(queryLower)) {
+            score += 1000;
         }
 
-        // 3) Совпадение фразы в описании и их количество
-        const exactInDescription = this.countWholePhraseOccurrencesUnicode(descriptionText, queryLower);
-        if (exactInDescription > 0) {
-            score += exactInDescription * 100;
+        // 3) Совпадение в любом поле
+        if (combinedText.includes(queryLower)) {
+            score += 100;
         }
 
-        // 4) Если фраза является подстрокой (без учёта границ слова) — лёгкий бонус как самый низкий приоритет
-        if (queryLower && combinedText.includes(queryLower)) {
-            score += 1;
-        }
+        // 4) Поиск по отдельным словам
+        const queryWords = queryLower.split(/\s+/).filter(word => word.length >= 2);
+        let wordMatches = 0;
+        
+        queryWords.forEach(word => {
+            if (titleText.includes(word)) {
+                wordMatches += 10; // Слово в заголовке
+            } else if (descriptionText.includes(word)) {
+                wordMatches += 1; // Слово в описании
+            }
+        });
+        
+        score += wordMatches;
 
         return score;
     }
 
-    // Подсчёт вхождений подстроки (неперекрывающиеся), регистронезависимый текст заранее приведён к lowerCase
-    countOccurrences(text, term) {
-        if (!text || !term) return 0;
-        const regex = new RegExp(this.escapeRegExp(term), 'g');
-        const matches = text.match(regex);
-        return matches ? matches.length : 0;
-    }
-
-    /**
-     * Подсчитывает точные вхождения целой фразы с учётом «словоподобных» границ для Unicode.
-     * Работает регистронезависимо, ожидается, что text и phrase уже приведены к lowerCase.
-     * Границы определяются как не-буквенно-цифровые символы (по Unicode), либо начало/конец строки.
-     * @param {string} text
-     * @param {string} phrase
-     * @returns {number}
-     */
-    countWholePhraseOccurrencesUnicode(text, phrase) {
-        if (!text || !phrase) return 0;
-        const escaped = this.escapeRegExp(phrase);
-        // Используем окрестности, чтобы имитировать границы слова для Unicode без lookbehind
-        // Матч считается валидным, если слева граница (^ или не буква/цифра),
-        // а справа конец строки или не буква/цифра
-        const regex = new RegExp(`(?:^|[^\\p{L}\\p{N}])(${escaped})(?=[^\\p{L}\\p{N}]|$)`, 'gu');
-        let count = 0;
-        while (regex.exec(text) !== null) {
-            count += 1;
-        }
-        return count;
-    }
 
     /**
      * Поиск по названию предмета
@@ -402,48 +354,25 @@ class ItemSearch {
 
 
     /**
-     * Нечеткий поиск - ищет по отдельным словам
+     * Простой и надежный поиск
      */
     fuzzySearch(text, query) {
         if (!text || !query) return false;
         
         const textLower = text.toLowerCase();
-        const queryWords = query.split(/\s+/).filter(word => word.length >= 2);
+        const queryLower = query.toLowerCase();
         
-        // Если нет слов для поиска, возвращаем false
-        if (queryWords.length === 0) {
-            return false;
+        // 1. Точное совпадение всей фразы
+        if (textLower.includes(queryLower)) {
+            return true;
         }
         
-        return queryWords.every(word => {
-            // 1. Точное совпадение подстроки - самый надежный способ
-            if (textLower.includes(word)) {
-                return true;
-            }
-            
-            // 2. Поиск по словам в тексте для частичных совпадений
-            const textWords = textLower.split(/\s+/);
-            
-            // Для коротких слов (2-3 символа) ищем только точные совпадения
-            if (word.length <= 3) {
-                return textWords.includes(word);
-            }
-            
-            // Для длинных слов (4+ символа) ищем частичные совпадения
-            return textWords.some(textWord => {
-                // Проверяем, что одно слово начинается с другого
-                if (textWord.startsWith(word) || word.startsWith(textWord)) {
-                    return true;
-                }
-                
-                // Проверяем схожесть для более гибкого поиска
-                const minLength = Math.min(word.length, textWord.length);
-                const maxLength = Math.max(word.length, textWord.length);
-                const similarity = minLength / maxLength;
-                
-                return similarity >= 0.6; // Минимум 60% совпадения
-            });
-        });
+        // 2. Поиск по отдельным словам
+        const queryWords = queryLower.split(/\s+/).filter(word => word.length >= 2);
+        if (queryWords.length === 0) return false;
+        
+        // Проверяем, что все слова запроса найдены в тексте
+        return queryWords.every(word => textLower.includes(word));
     }
 
     /**
