@@ -419,8 +419,8 @@ class ItemSearch {
             // Точное совпадение
             if (textLower.includes(word)) return true;
             
-            // Частичное совпадение только для слов длиннее 4 символов
-            if (word.length > 4) {
+            // Частичное совпадение для слов длиннее 3 символов
+            if (word.length >= 3) {
                 return textLower.split(/\s+/).some(textWord => {
                     // Проверяем, что совпадение достаточно значимое
                     const minLength = Math.min(word.length, textWord.length);
