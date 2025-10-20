@@ -118,12 +118,6 @@ class TextUtils {
 class ItemSearch {
     constructor(items) {
         this.items = items;
-        this.searchStrategies = [
-            this.searchByName.bind(this),
-            this.searchByNameRus.bind(this),
-            this.searchByDescription.bind(this),
-            this.searchByKey.bind(this)
-        ];
     }
 
     /**
@@ -132,76 +126,14 @@ class ItemSearch {
      * @returns {Array} Массив найденных предметов
      */
     search(query) {
-        if (!this.isValidQuery(query)) {
+        if (!query || query.trim().length === 0) {
             return [];
         }
         
-        const normalizedQuery = this.normalizeQuery(query);
-        
-        // Проверяем, является ли запрос осмысленным
-        if (!this.isMeaningfulQuery(normalizedQuery)) {
-            return [];
-        }
-        
+        const normalizedQuery = query.trim().toLowerCase();
         return this.performSearch(normalizedQuery);
     }
 
-    /**
-     * Проверяет валидность поискового запроса
-     * @param {string} query - Запрос для проверки
-     * @returns {boolean} true если запрос валиден
-     */
-    isValidQuery(query) {
-        return typeof query === 'string' && query.trim().length >= 0;
-    }
-
-    /**
-     * Нормализует поисковый запрос
-     * @param {string} query - Исходный запрос
-     * @returns {string} Нормализованный запрос
-     */
-    normalizeQuery(query) {
-        return query.trim().toLowerCase();
-    }
-
-    /**
-     * Проверяет, является ли запрос осмысленным
-     * @param {string} query - Нормализованный запрос
-     * @returns {boolean} true если запрос осмысленный
-     */
-    isMeaningfulQuery(query) {
-        // Убираем все ограничения - принимаем любой запрос
-        return query.length > 0;
-    }
-
-    /**
-     * Проверяет, является ли строка случайным набором символов
-     * @param {string} str - Строка для проверки
-     * @returns {boolean} true если строка выглядит как случайная
-     */
-    isRandomString(str) {
-        // Проверяем повторяющиеся символы (более 3 одинаковых подряд)
-        if (/(.)\1{3,}/.test(str)) {
-            return true;
-        }
-        
-        // Проверяем чередование символов (ававава, ывывыв)
-        if (/(.)(.)\1\2\1/.test(str)) {
-            return true;
-        }
-        
-        // Проверяем слишком много согласных подряд (более 4)
-        if (/[бвгджзклмнпрстфхцчшщ]{5,}/.test(str)) {
-            return true;
-        }
-        
-        // Проверяем слишком много гласных подряд (более 3)
-        if (/[аеёиоуыэюя]{4,}/.test(str)) {
-            return true;
-        }
-        
-        return false;
-    }
 
     /**
      * Выполняет поиск по нормализованному запросу
@@ -209,222 +141,20 @@ class ItemSearch {
      * @returns {Array} Результаты поиска
      */
     performSearch(normalizedQuery) {
-        const items = Array.isArray(this.items) ? this.items : Object.entries(this.items);
-        const matchingItems = items.filter((item) => {
-            // Если items - массив, item уже является объектом
-            // Если items - объект, item это [key, value]
-            const itemData = Array.isArray(this.items) ? item : item[1];
-            const itemKey = Array.isArray(this.items) ? item._id : item[0];
+        // Простой поиск по всем полям без ограничений
+        const results = this.items.filter(item => {
+            const name = (item.name || '').toLowerCase();
+            const nameRus = (item.nameRus || '').toLowerCase();
+            const description = (item.description || '').toLowerCase();
             
-            return this.searchStrategies.some(strategy => 
-                strategy(itemData, itemKey, normalizedQuery)
-            );
+            return name.includes(normalizedQuery) || 
+                   nameRus.includes(normalizedQuery) || 
+                   description.includes(normalizedQuery);
         });
 
-        // Ранжируем результаты
-        const rankedItems = this.rankResults(matchingItems, normalizedQuery);
-        return this.mapToSearchResults(rankedItems);
+        return results;
     }
 
-    /**
-     * Ранжирует результаты поиска по релевантности
-     * @param {Array} items - Найденные предметы
-     * @param {string} query - Поисковый запрос
-     * @returns {Array} Отранжированные результаты
-     */
-    rankResults(items, query) {
-        return items.sort((itemA, itemB) => {
-            // Если items - массив, item уже является объектом
-            // Если items - объект, item это [key, value]
-            const itemDataA = Array.isArray(this.items) ? itemA : itemA[1];
-            const itemKeyA = Array.isArray(this.items) ? itemA._id : itemA[0];
-            const itemDataB = Array.isArray(this.items) ? itemB : itemB[1];
-            const itemKeyB = Array.isArray(this.items) ? itemB._id : itemB[0];
-            
-            const scoreA = this.calculateRelevanceScore(itemDataA, itemKeyA, query);
-            const scoreB = this.calculateRelevanceScore(itemDataB, itemKeyB, query);
-            return scoreB - scoreA; // Сортируем по убыванию релевантности
-        });
-    }
-
-    /**
-     * Подсчитывает количество вхождений запроса в тексте
-     * @param {string} text - Текст для поиска
-     * @param {string} query - Поисковый запрос
-     * @returns {number} Количество вхождений
-     */
-    countMatches(text, query) {
-        if (!text || !query) return 0;
-        
-        // Подсчитываем точные вхождения
-        const exactMatches = (text.match(new RegExp(this.escapeRegExp(query), 'gi')) || []).length;
-        
-        // Подсчитываем вхождения по словам (для многословных запросов)
-        const queryWords = query.split(/\s+/).filter(word => word.length > 0);
-        let wordMatches = 0;
-        
-        queryWords.forEach(word => {
-            const matches = (text.match(new RegExp(this.escapeRegExp(word), 'gi')) || []).length;
-            wordMatches += matches;
-        });
-        
-        // Возвращаем максимум из точных совпадений и совпадений по словам
-        return Math.max(exactMatches, wordMatches);
-    }
-
-    /**
-     * Экранирует специальные символы для регулярных выражений
-     * @param {string} string - Строка для экранирования
-     * @returns {string} Экранированная строка
-     */
-    escapeRegExp(string) {
-        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    }
-
-    /**
-     * Вычисляет релевантность предмета для запроса
-     * @param {Object} item - Данные предмета
-     * @param {string} key - Ключ предмета
-     * @param {string} query - Поисковый запрос
-     * @returns {number} Оценка релевантности
-     */
-    calculateRelevanceScore(item, key, query) {
-        let score = 0;
-        const queryLower = query.toLowerCase();
-
-        // Тексты для разных приоритетов
-        const titleText = [
-            (item.name || ''),
-            (item.nameRus || '')
-        ].join(' ').toLowerCase();
-        const descriptionText = (item.description || '').toLowerCase();
-        const combinedText = [titleText, key ? String(key).toLowerCase() : '', descriptionText]
-            .join(' ').trim();
-
-        // 1) Точное совпадение всей фразы (как отдельной словоформы) в любом поле — максимальный приоритет
-        const exactAnywhere = this.countWholePhraseOccurrencesUnicode(combinedText, queryLower);
-        if (exactAnywhere > 0) {
-            // Большой коэффициент, чтобы гарантировать приоритет над остальными
-            score += exactAnywhere * 1000000;
-        }
-
-        // 2) Совпадение фразы в заголовке (name/nameRus)
-        const exactInTitle = this.countWholePhraseOccurrencesUnicode(titleText, queryLower);
-        if (exactInTitle > 0) {
-            score += exactInTitle * 10000;
-        }
-
-        // 3) Совпадение фразы в описании и их количество
-        const exactInDescription = this.countWholePhraseOccurrencesUnicode(descriptionText, queryLower);
-        if (exactInDescription > 0) {
-            score += exactInDescription * 100;
-        }
-
-        // 4) Если фраза является подстрокой (без учёта границ слова) — лёгкий бонус как самый низкий приоритет
-        if (queryLower && combinedText.includes(queryLower)) {
-            score += 1;
-        }
-
-        return score;
-    }
-
-    // Подсчёт вхождений подстроки (неперекрывающиеся), регистронезависимый текст заранее приведён к lowerCase
-    countOccurrences(text, term) {
-        if (!text || !term) return 0;
-        const regex = new RegExp(this.escapeRegExp(term), 'g');
-        const matches = text.match(regex);
-        return matches ? matches.length : 0;
-    }
-
-    /**
-     * Подсчитывает точные вхождения целой фразы с учётом «словоподобных» границ для Unicode.
-     * Работает регистронезависимо, ожидается, что text и phrase уже приведены к lowerCase.
-     * Границы определяются как не-буквенно-цифровые символы (по Unicode), либо начало/конец строки.
-     * @param {string} text
-     * @param {string} phrase
-     * @returns {number}
-     */
-    countWholePhraseOccurrencesUnicode(text, phrase) {
-        if (!text || !phrase) return 0;
-        const escaped = this.escapeRegExp(phrase);
-        // Используем окрестности, чтобы имитировать границы слова для Unicode без lookbehind
-        // Матч считается валидным, если слева граница (^ или не буква/цифра),
-        // а справа конец строки или не буква/цифра
-        const regex = new RegExp(`(?:^|[^\\p{L}\\p{N}])(${escaped})(?=[^\\p{L}\\p{N}]|$)`, 'gu');
-        let count = 0;
-        while (regex.exec(text) !== null) {
-            count += 1;
-        }
-        return count;
-    }
-
-    /**
-     * Поиск по названию предмета
-     */
-    searchByName(item, key, query) {
-        return item.name && this.fuzzySearch(item.name, query);
-    }
-
-    /**
-     * Поиск по русскому названию предмета
-     */
-    searchByNameRus(item, key, query) {
-        return item.nameRus && this.fuzzySearch(item.nameRus, query);
-    }
-
-    /**
-     * Поиск по описанию предмета
-     */
-    searchByDescription(item, key, query) {
-        return item.description && this.fuzzySearch(item.description, query);
-    }
-
-    /**
-     * Поиск по ключу предмета
-     */
-    searchByKey(item, key, query) {
-        return key && this.fuzzySearch(key, query);
-    }
-
-
-    /**
-     * Нечеткий поиск - ищет по отдельным словам
-     */
-    fuzzySearch(text, query) {
-        if (!text || !query) return false;
-        
-        const textLower = text.toLowerCase();
-        const queryWords = query.split(/\s+/).filter(word => word.length > 0);
-        
-        // Если нет слов для поиска, возвращаем false
-        if (queryWords.length === 0) {
-            return false;
-        }
-        
-        return queryWords.every(word => {
-            // Простой поиск подстроки - самый надежный способ
-            return textLower.includes(word);
-        });
-    }
-
-    /**
-     * Преобразует найденные предметы в формат результатов поиска
-     * @param {Array} matchingItems - Найденные предметы
-     * @returns {Array} Результаты поиска
-     */
-    mapToSearchResults(matchingItems) {
-        return matchingItems.map((item) => {
-            // Если items - массив, item уже является объектом
-            // Если items - объект, item это [key, value]
-            const itemData = Array.isArray(this.items) ? item : item[1];
-            const itemKey = Array.isArray(this.items) ? item._id : item[0];
-            
-            return {
-                ...itemData,
-                key: itemKey
-            };
-        });
-    }
 }
 
 /**
