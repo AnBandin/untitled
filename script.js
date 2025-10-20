@@ -119,7 +119,7 @@ class PF2ESearchApp {
             ].join(' ').toLowerCase();
             
             return searchText.includes(normalizedQuery);
-        }).slice(0, 50); // Ограничиваем результаты
+        }); // Ограничиваем результаты
 
         // Применяем фильтры
         const filteredResults = this.applyFilters(results);
