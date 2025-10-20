@@ -415,22 +415,43 @@ class ItemSearch {
             return false;
         }
         
+        // Отладка для поиска "руна"
+        if (query.toLowerCase() === 'руна') {
+            console.log('=== DEBUG fuzzySearch ===');
+            console.log('Text:', text);
+            console.log('Text lower:', textLower);
+            console.log('Query words:', queryWords);
+            console.log('Includes check:', textLower.includes('руна'));
+        }
+        
         return queryWords.every(word => {
             // 1. Точное совпадение подстроки - самый надежный способ
             if (textLower.includes(word)) {
+                if (query.toLowerCase() === 'руна') {
+                    console.log('Found via includes:', word, 'in', text);
+                }
                 return true;
             }
             
             // 2. Поиск по словам в тексте для частичных совпадений
             const textWords = textLower.split(/\s+/);
             
+            if (query.toLowerCase() === 'руна') {
+                console.log('Text words:', textWords);
+                console.log('Word length:', word.length);
+            }
+            
             // Для коротких слов (2-3 символа) ищем только точные совпадения
             if (word.length <= 3) {
-                return textWords.includes(word);
+                const result = textWords.includes(word);
+                if (query.toLowerCase() === 'руна') {
+                    console.log('Short word check:', word, 'in words:', textWords, 'result:', result);
+                }
+                return result;
             }
             
             // Для длинных слов (4+ символа) ищем частичные совпадения
-            return textWords.some(textWord => {
+            const result = textWords.some(textWord => {
                 // Проверяем, что одно слово начинается с другого
                 if (textWord.startsWith(word) || word.startsWith(textWord)) {
                     return true;
@@ -443,6 +464,12 @@ class ItemSearch {
                 
                 return similarity >= 0.6; // Минимум 60% совпадения
             });
+            
+            if (query.toLowerCase() === 'руна') {
+                console.log('Long word check result:', result);
+            }
+            
+            return result;
         });
     }
 
